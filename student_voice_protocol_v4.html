@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GUARD Protocol Appendix D — Student Voice Protocol v4.0</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "surface": "#fbf9f6",
+        "surface-dim": "#dbdad7",
+        "surface-container": "#efeeeb",
+        "surface-container-low": "#f5f3f0",
+        "surface-container-high": "#eae8e5",
+        "primary": "#000000",
+        "tertiary": "#78100b",
+        "tertiary-soft": "#c84b3d",
+        "outline": "#777777",
+        "outline-variant": "#c6c6c6",
+        "error": "#ba1a1a",
+        "ink": "#1b1c1a",
+        "ink-soft": "#474747",
+      },
+      fontFamily: {
+        "headline": ["Newsreader", "Georgia", "serif"],
+        "body": ["Public Sans", "system-ui", "sans-serif"],
+      },
+    },
+  },
+}
+</script>
+<style>
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+  body { background-color: #fbf9f6; color: #1b1c1a; }
+  * { border-radius: 0 !important; box-shadow: none !important; }
+
+  .step-link { display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; font-family:"Public Sans",sans-serif; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; border-left:3px solid transparent; transition:all .1s; }
+  .step-link:hover { background:#eae8e5; border-left-color:#000; }
+  .step-link.active { background:#000; color:#fff; border-left-color:#78100b; }
+  .step-link.completed { color:#474747; border-left-color:#474747; }
+
+  .phase-header { font-family:"Newsreader",serif; font-size:.8rem; font-weight:700; font-style:italic; text-transform:uppercase; letter-spacing:.1em; padding:1rem 1rem .25rem; color:#78100b; border-bottom:1px solid #000; margin-bottom:.25rem; }
+
+  .equity-gate { border:2px solid #78100b; padding:1.5rem; position:relative; background:#fff; }
+  .equity-gate::before { content:"EQUITY GATE — APPENDIX R"; position:absolute; top:-.75rem; left:1rem; background:#78100b; color:#fff; font-family:"Public Sans",sans-serif; font-size:.65rem; font-weight:800; letter-spacing:.15em; padding:.15rem .75rem; }
+
+  .legal-cite { border:1px solid #000; border-left:3px solid #78100b; padding:1rem 1.25rem; font-size:.85rem; font-style:italic; background:#fff; }
+
+  .dossier-item { border:1px solid #000; padding:1rem 1.25rem; margin-top:-1px; background:#fff; }
+  .dossier-item:first-child { margin-top:0; }
+
+  .q-chip { display:inline-block; font-family:"Public Sans",sans-serif; font-size:.6rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; padding:.15rem .5rem; border:1px solid currentColor; }
+  .q-chip.inv { color:#1b5e20; }
+  .q-chip.dir { color:#8b6914; }
+  .q-chip.opt { color:#78100b; }
+
+  input[type=text], input[type=date], input[type=time], input[type=email], select, textarea {
+    border:1px solid #000 !important; background:#fbf9f6 !important; font-family:"Public Sans",sans-serif !important; font-size:.9rem !important; padding:.625rem .75rem !important; width:100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color:#78100b !important; border-width:2px !important; outline:none !important; }
+  textarea { font-style:italic; min-height:5rem; }
+  label { font-family:"Public Sans",sans-serif; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; display:block; margin-bottom:.375rem; }
+  input[type=checkbox], input[type=radio] { width:1.1rem; height:1.1rem; border:2px solid #000; accent-color:#78100b; }
+
+  .btn-primary { background:#000; color:#fff; border:2px solid #000; padding:.75rem 1.5rem; font-family:"Public Sans",sans-serif; font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; cursor:pointer; transition:all .1s; }
+  .btn-primary:hover { background:#78100b; border-color:#78100b; }
+  .btn-secondary { background:#fbf9f6; color:#000; border:2px solid #000; padding:.75rem 1.5rem; font-family:"Public Sans",sans-serif; font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; cursor:pointer; transition:all .1s; }
+  .btn-secondary:hover { background:#000; color:#fff; }
+  .btn-ghost { background:transparent; color:#000; border:1px solid #000; padding:.45rem .75rem; font-family:"Public Sans",sans-serif; font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; cursor:pointer; display:inline-flex; align-items:center; gap:.35rem; }
+  .btn-ghost:hover { background:#000; color:#fff; }
+  .btn-ghost.active { background:#78100b; color:#fff; border-color:#78100b; }
+  .btn-ghost.recording { background:#78100b; color:#fff; border-color:#78100b; animation:pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.55;} }
+
+  .age-pill { font-family:"Public Sans",sans-serif; font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; padding:.45rem .85rem; border:2px solid #000; background:#fbf9f6; cursor:pointer; }
+  .age-pill.active { background:#000; color:#fff; }
+
+  .warning-card { border:2px solid #78100b; background:#fff2f0; padding:1.25rem 1.5rem; display:flex; gap:1rem; }
+  .warning-card .material-symbols-outlined { color:#78100b; }
+  .warning-card h4 { font-family:"Public Sans",sans-serif; font-size:.7rem; font-weight:900; letter-spacing:.15em; text-transform:uppercase; color:#78100b; margin-bottom:.35rem; }
+
+  .info-banner { border:1px solid #000; background:#efeeeb; padding:1.25rem 1.5rem; }
+  .info-banner h4 { font-family:"Public Sans",sans-serif; font-size:.7rem; font-weight:900; letter-spacing:.15em; text-transform:uppercase; margin-bottom:.35rem; }
+
+  .question-card { background:#efeeeb; border:1px solid #000; padding:1.25rem 1.5rem; display:flex; flex-direction:column; gap:.75rem; }
+  .question-card .q-header { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
+  .question-card .q-label { font-family:"Public Sans",sans-serif; font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:#78100b; }
+  .question-card .q-prompt { font-family:"Newsreader",serif; font-size:1.15rem; font-weight:500; line-height:1.4; }
+  .question-card .q-tools { display:flex; gap:.5rem; flex-wrap:wrap; }
+  .question-card .q-routing { font-family:"Public Sans",sans-serif; font-size:.6rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#474747; border-top:1px solid #c6c6c6; padding-top:.5rem; }
+
+  details > summary { list-style:none; cursor:pointer; }
+  details > summary::-webkit-details-marker { display:none; }
+  details[open] .chevron { transform:rotate(180deg); }
+  .chevron { transition:transform .2s; display:inline-block; }
+
+  .domain-header { padding:2rem 0 1.5rem; display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; border-top:2px solid #000; }
+  .domain-num { font-family:"Public Sans",sans-serif; font-size:.65rem; font-weight:800; letter-spacing:.2em; color:rgba(0,0,0,.45); text-transform:uppercase; margin-bottom:.35rem; display:block; }
+  .domain-title { font-family:"Newsreader",serif; font-size:3rem; font-weight:700; letter-spacing:-.02em; line-height:1; }
+  .domain-cond { display:inline-block; font-family:"Public Sans",sans-serif; font-size:.6rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; padding:.15rem .5rem; background:#78100b; color:#fff; margin-left:.5rem; vertical-align:middle; }
+
+  .drawer-btn { position:fixed; right:1.5rem; bottom:1.5rem; z-index:60; }
+
+  #reluctance-drawer { position:fixed; top:0; right:-100%; width:min(520px,95vw); height:100vh; background:#fbf9f6; border-left:2px solid #000; box-shadow:none; z-index:70; transition:right .25s; overflow-y:auto; padding:1.5rem 1.5rem 4rem; }
+  #reluctance-drawer.open { right:0; }
+  #reluctance-drawer h3 { font-family:"Newsreader",serif; font-size:1.75rem; font-weight:800; margin-bottom:.75rem; }
+  #reluctance-drawer table { width:100%; border-collapse:collapse; font-size:.75rem; margin-top:1rem; }
+  #reluctance-drawer th, #reluctance-drawer td { border:1px solid #000; padding:.5rem .65rem; text-align:left; vertical-align:top; }
+  #reluctance-drawer th { background:#000; color:#fff; font-family:"Public Sans",sans-serif; font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; }
+
+  .threat-pause-bar { position:sticky; top:4rem; z-index:40; background:#78100b; color:#fff; padding:.65rem 1rem; display:flex; justify-content:space-between; align-items:center; font-family:"Public Sans",sans-serif; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+
+  .consent-banner { border:2px solid #78100b; background:#fff2f0; padding:1rem 1.25rem; font-family:"Public Sans",sans-serif; font-size:.85rem; }
+
+  @media print {
+    body { background:#fff; color:#000; font-size:10pt; }
+    header, aside, #reluctance-drawer, .drawer-btn, .threat-pause-bar, .no-print { display:none !important; }
+    main { margin-left:0 !important; padding:0 !important; }
+    #interview-body { display:none; }
+    #print-report { display:block !important; }
+    details { page-break-inside:avoid; }
+    details > summary { display:none; }
+    details > *:not(summary) { display:block !important; }
+    h1,h2,h3 { page-break-after:avoid; }
+    .question-card { page-break-inside:avoid; background:#fff; border:1px solid #000; padding:.5rem .75rem; margin-bottom:.5rem; }
+  }
+  #print-report { display:none; }
+</style>
+</head>
+
+<body class="font-body">
+
+<!-- =========== FIXED HEADER =========== -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-surface border-b-2 border-black">
+  <div class="flex items-center gap-6">
+    <span class="font-headline text-xl font-bold italic tracking-tight">GUARD Protocol Engine</span>
+    <nav class="hidden md:flex gap-1 items-center">
+      <a class="text-[.65rem] font-bold uppercase tracking-wider px-3 py-1 border border-transparent hover:border-black hover:bg-black hover:text-white transition-all" href="#">Case Files</a>
+      <a class="text-[.65rem] font-bold uppercase tracking-wider px-3 py-1 border border-transparent hover:border-black hover:bg-black hover:text-white transition-all" href="#">Legal Database</a>
+      <a class="text-[.65rem] font-bold uppercase tracking-wider px-3 py-1 border border-transparent hover:border-black hover:bg-black hover:text-white transition-all" href="#">Faculty Portal</a>
+    </nav>
+  </div>
+  <div class="flex gap-3 items-center">
+    <span id="draft-stamp" class="text-[.6rem] font-bold uppercase tracking-widest text-ink-soft">Unsaved</span>
+    <button class="btn-secondary text-[.6rem] py-2 px-3" onclick="saveDraft()">Save Draft</button>
+    <button class="btn-primary text-[.6rem] py-2 px-3" onclick="generateReport()">Generate Report</button>
+  </div>
+</header>
+
+<!-- =========== LAYOUT =========== -->
+<div class="pt-16 min-h-screen flex">
+
+  <!-- SIDEBAR -->
+  <aside class="w-60 shrink-0 border-r-2 border-black bg-surface overflow-y-auto fixed top-16 bottom-0 left-0">
+    <div class="px-4 py-3 border-b border-black flex justify-between items-center">
+      <div>
+        <span class="text-[.6rem] font-bold uppercase tracking-widest text-ink-soft">Case:</span>
+        <span id="sidebar-case" class="text-[.6rem] font-bold uppercase tracking-widest ml-1">— —</span>
+      </div>
+      <span class="text-[.6rem] font-bold uppercase tracking-widest">App. D</span>
+    </div>
+
+    <div class="phase-header">Phase 1 · Before the Meeting</div>
+    <nav class="flex flex-col">
+      <a class="step-link completed" href="#"><span class="text-[.58rem] font-mono mr-1">1.0</span>Case Setup</a>
+      <a class="step-link completed" href="#"><span class="text-[.58rem] font-mono mr-1">1.1</span>Constructive Removal</a>
+      <a class="step-link completed" href="#"><span class="text-[.58rem] font-mono mr-1">1.2</span>Document Assembly</a>
+      <a class="step-link completed" href="#"><span class="text-[.58rem] font-mono mr-1">1.3</span>IEP Fidelity</a>
+      <a class="step-link active" href="#"><span class="text-[.58rem] font-mono mr-1">1.4</span>Student Voice</a>
+      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">1.5</span>Family Preparation</a>
+      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">1.6</span>Staff Evidence</a>
+      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">1.7</span>Process Observer</a>
+      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">1.8</span>Pre-Meeting Triggers</a>
+    </nav>
+    <div class="phase-header">Phase 2 · During Meeting</div>
+    <nav class="flex flex-col">
+      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">2.1</span>Opening / EC1</a>
+      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">2.2</span>Evidence Review</a>
+      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">2.3</span>Question 1 / EC2</a>
+      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">2.4</span>Question 2</a>
+      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">2.5</span>Determination / EC3</a>
+    </nav>
+    <div class="phase-header">Phase 3 · After Meeting</div>
+    <nav class="flex flex-col pb-20">
+      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">3.1</span>Prior Written Notice</a>
+      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">3.2</span>Observer Debrief</a>
+      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">3.3</span>FBA/BIP Data</a>
+      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">3.4</span>FAPE & Reentry</a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="ml-60 flex-1 min-h-screen">
+
+    <!-- THREAT ASSESSMENT PAUSE BAR -->
+    <div id="threat-bar" class="threat-pause-bar no-print">
+      <span><span class="material-symbols-outlined align-middle mr-2" style="font-size:18px;">report</span>Threat disclosure? Route to threat team and pause this protocol.</span>
+      <button class="btn-secondary text-[.6rem] py-1 px-3" style="background:#fff;color:#78100b;border-color:#fff;" onclick="pauseForThreat()">Pause & Route</button>
+    </div>
+
+    <div id="interview-body" class="max-w-5xl mx-auto px-10 py-14">
+
+      <!-- HERO -->
+      <span class="text-[.7rem] font-bold uppercase tracking-[.25em] text-tertiary block mb-3">Appendix D · Step 1.4 · Phase 1: Before the Meeting</span>
+      <h1 class="font-headline text-6xl md:text-7xl font-bold tracking-tighter leading-none mb-6">Student Voice Protocol</h1>
+      <div class="max-w-4xl border-l-4 border-black pl-6 py-2 mb-8">
+        <p class="font-headline text-lg md:text-xl italic leading-relaxed text-ink">
+          <em>Nothing about us without us.</em> Students must have power, not just presence, in decisions about their education. This interview centers the student's experience and presents their voice to the team <strong>without filtering through adult interpretation</strong>. This is not an interrogation. This is evidence collection.
+        </p>
+      </div>
+
+      <!-- LEGAL/CLINICAL MANDATORY DISTINCTION -->
+      <div class="bg-tertiary text-white p-7 border-2 border-black mb-3">
+        <div class="flex gap-5 items-start">
+          <span class="material-symbols-outlined text-3xl mt-1" style="font-variation-settings:'FILL' 1;">gavel</span>
+          <div>
+            <h3 class="font-bold uppercase text-[.7rem] tracking-[.15em] mb-2 opacity-80">Legal / Clinical Mandatory Distinction</h3>
+            <p class="font-headline text-xl md:text-2xl font-bold italic leading-snug">"Never ask whether the student knew the rules. Always ask whether the student could follow the rules at that moment."</p>
+          </div>
+        </div>
+      </div>
+      <div class="legal-cite mb-12">
+        <strong>Legal basis:</strong> IDEA requires the MDR team to review "all relevant information in the student's file" (34 CFR §300.530(e)). The 2006 Federal Register commentary (71 Fed. Reg. 46,720) emphasizes that no source of relevant information may be excluded. The student's first-person account is relevant information — knowing a rule does not equate to the ability to execute that rule under stress.
+      </div>
+
+      <!-- AGE BAND SELECTOR -->
+      <section class="mb-10 border-2 border-black bg-white p-6">
+        <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+          <div>
+            <label class="mb-2">Age / Developmental Band</label>
+            <p class="text-[.75rem] text-ink-soft italic max-w-md">Select the band matching the student's developmental and language functioning — not necessarily their chronological grade. When in doubt, start lower and escalate only if needed.</p>
+          </div>
+          <div class="flex gap-2" id="age-band-buttons">
+            <button class="age-pill active" data-band="hs">High School (9–12)</button>
+            <button class="age-pill" data-band="ms">Middle School (5–8)</button>
+            <button class="age-pill" data-band="ue">Upper Elementary (2–4)</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: METADATA -->
+      <section class="mb-12 border-2 border-black bg-white divide-y-2 divide-black" id="metadata">
+        <div class="p-6 bg-black text-white">
+          <h2 class="font-headline text-2xl font-bold uppercase tracking-tight">Interview Metadata</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
+          <div class="p-5"><label>Student Name</label><input id="m-student" type="text" placeholder="Full name"/></div>
+          <div class="p-5"><label>Grade / Age</label><input id="m-grade" type="text" placeholder="e.g. Grade 7, age 12"/></div>
+          <div class="p-5"><label>Disability Category (if any)</label><input id="m-disability" type="text" placeholder="e.g. OHI, SLD, ASD"/></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
+          <div class="p-5"><label>Interviewer Name</label><input id="m-interviewer" type="text" placeholder="Full name"/></div>
+          <div class="p-5"><label>Interviewer Role</label><input id="m-role" type="text" placeholder="e.g. Social Worker"/></div>
+          <div class="p-5"><label>Trusted-Adult Relationship to Student</label><input id="m-relationship" type="text" placeholder="e.g. Case Manager, Mentor"/></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
+          <div class="p-5"><label>Incident Date</label><input id="m-incident-date" type="date"/></div>
+          <div class="p-5"><label>Interview Date</label><input id="m-interview-date" type="date"/></div>
+          <div class="p-5"><label>Interview Time</label><input id="m-interview-time" type="time"/></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
+          <div class="p-5">
+            <label>Interview Modality</label>
+            <select id="m-modality"><option>In-person</option><option>Phone</option><option>Video</option><option>Written / AAC</option><option>Other</option></select>
+          </div>
+          <div class="p-5 bg-surface-container-low">
+            <label class="flex items-start gap-3 cursor-pointer" style="display:flex;">
+              <input id="m-not-discipliner" type="checkbox" class="mt-1"/>
+              <span><span class="block font-bold text-[.8rem]">Interviewer is NOT the disciplining administrator and NOT identified by the student as unsafe.</span><span class="block text-[.65rem] text-error font-bold uppercase tracking-widest mt-1">Required for legal validity under §300.530(e).</span></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- GATE 1: BIAS MITIGATION (structural gate) -->
+      <section id="gate-bias" class="equity-gate mb-10">
+        <h2 class="font-headline text-3xl font-bold mb-2 mt-2">Pre-Interview Bias Mitigation</h2>
+        <p class="text-sm mb-5 italic">Non-negotiable. Complete before substantive interview. Purpose is not to change your belief — it is to <em>notice</em> what you already believe so you can recognize it during the interview. These answers remain confidential and are not shared with the team.</p>
+        <div class="space-y-5" id="bias-questions"></div>
+      </section>
+
+      <!-- GATE 2: CULTURAL SELF-PREPARATION -->
+      <section id="gate-cultural" class="equity-gate mb-10">
+        <h2 class="font-headline text-3xl font-bold mb-2 mt-2">Cultural Validity — Interviewer Self-Preparation</h2>
+        <p class="text-sm mb-5 italic">Complete in writing before the interview. Keep confidential. Direct eye contact, silence, and verbal expressiveness all vary by cultural norm. "Cool pose," minimal affect, and over-compliance may be protective strategies, not dishonesty or lack of feeling.</p>
+        <div class="space-y-5" id="cultural-questions"></div>
+      </section>
+
+      <!-- CONSENT + THREAT ROUTING -->
+      <section class="mb-10 border-2 border-black bg-white p-8" id="consent-section">
+        <h2 class="font-headline text-3xl font-bold mb-4">Consent Protocol &amp; Threat Assessment Routing</h2>
+        <div class="consent-banner mb-5">
+          <p class="italic mb-2"><strong>Read aloud, verbatim:</strong></p>
+          <p class="italic leading-relaxed">"I want to talk with you about what happened on [date of incident]. I'm here to listen to YOUR side of the story — what you were experiencing, what was happening around you, and what you think happened. This is NOT about getting you in trouble. It's about making sure the adults understand your perspective. Everything you tell me is going to be shared with the team that decides what happens next. You don't have to answer every question. If there's something you don't want to talk about, you can say so, and we'll move on. You can also ask me to explain a question if you don't understand it. Is it okay if we talk about this?"</p>
+        </div>
+        <div class="consent-banner mb-5">
+          <p class="italic mb-2"><strong>If a threat assessment is also in progress, add verbatim:</strong></p>
+          <p class="italic leading-relaxed">"If you tell me something that makes me worried about someone's safety — including yours — I may need to share that with the school's safety team. I want you to know that before we start."</p>
+        </div>
+        <div class="mb-4">
+          <label>Student Consent Response</label>
+          <div class="flex gap-3 flex-wrap">
+            <label class="flex items-center gap-2 border-2 border-black px-3 py-2 cursor-pointer"><input type="radio" name="consent" value="yes"/>Yes</label>
+            <label class="flex items-center gap-2 border-2 border-black px-3 py-2 cursor-pointer"><input type="radio" name="consent" value="no"/>No (do not proceed)</label>
+            <label class="flex items-center gap-2 border-2 border-black px-3 py-2 cursor-pointer"><input type="radio" name="consent" value="conditional"/>Conditional</label>
+          </div>
+        </div>
+        <div><label>Condition details (if conditional) — describe condition and how it was honored</label><textarea id="consent-condition" rows="2"></textarea></div>
+        <div id="consent-warning" class="warning-card mt-5" style="display:none;"><span class="material-symbols-outlined text-2xl">priority_high</span><div><h4>Consent Not Obtained</h4><p class="text-sm">The student declined or gave conditional consent that has not been resolved. The interview body below is visible for records-keeping only. Do not conduct the substantive interview until consent is obtained or rescheduled.</p></div></div>
+      </section>
+
+      <!-- ENVIRONMENT & TIMING CHECKLIST -->
+      <section class="mb-10 border-2 border-black bg-white p-8" id="environment-section">
+        <h2 class="font-headline text-3xl font-bold mb-4">Environment &amp; Timing</h2>
+        <p class="text-sm italic mb-5 text-ink-soft">Within 3 school days of the incident. 20–45 minutes. Sit at an angle, not directly across. Remove physical barriers between you and the student.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="env-checklist"></div>
+      </section>
+
+      <!-- GROUND RULES -->
+      <section class="mb-10 border-2 border-black bg-white" id="ground-rules">
+        <div class="p-6 bg-black text-white flex justify-between items-center">
+          <h2 class="font-headline text-2xl font-bold uppercase tracking-tight">Ground Rules — Read Aloud Verbatim</h2>
+          <button class="btn-ghost" style="border-color:#fff;color:#fff;" data-speak-target="#ground-rules-script"><span class="material-symbols-outlined" style="font-size:16px;">volume_up</span>Listen</button>
+        </div>
+        <div class="p-7">
+          <div id="ground-rules-script" class="font-headline text-lg italic leading-relaxed space-y-3"></div>
+          <label class="flex items-start gap-3 mt-5 cursor-pointer" style="display:flex;">
+            <input id="ground-rules-ack" type="checkbox" class="mt-1"/>
+            <span class="text-sm font-medium">Ground rules reviewed verbatim and acknowledged by student.</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- RAPPORT + PRACTICE NARRATIVE + VOCAB SCAFFOLDING (collapsed reference) -->
+      <section class="mb-10">
+        <details class="border-2 border-black bg-white mb-3">
+          <summary class="p-5 flex justify-between items-center">
+            <h3 class="font-headline text-xl font-bold">Rapport-Building Phase · 3–5 min neutral topics</h3>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="p-6 border-t border-black space-y-3 text-sm">
+            <p class="italic">"Before we talk about what happened, I'd like to know a little bit about you. Tell me about your family — who lives with you?"</p>
+            <p class="italic">[After family topic, move to school:] "What's your favorite class at school? What do you like about it?"</p>
+            <p class="text-ink-soft"><strong>Minimum requirement:</strong> Student produces at least 2–3 complete, multi-sentence responses to open-ended questions before moving to substantive phase. Extend rather than rush.</p>
+            <label class="flex items-center gap-3 mt-3" style="display:flex;"><input id="rapport-ack" type="checkbox"/><span class="text-sm font-medium">Student produced 2–3 complete multi-sentence responses.</span></label>
+          </div>
+        </details>
+        <details class="border-2 border-black bg-white mb-3">
+          <summary class="p-5 flex justify-between items-center">
+            <h3 class="font-headline text-xl font-bold">Practice Narrative · Episodic Memory Training</h3>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="p-6 border-t border-black space-y-3 text-sm">
+            <p class="italic">"Now I'd like you to practice telling me a whole story. Tell me everything that happened when you ate breakfast this morning — from the moment you woke up until you got to school. Tell me everything you can remember, in order, from beginning to end."</p>
+            <p class="text-ink-soft">Use open-ended follow-ups only: <em>"Then what happened?" / "Tell me more."</em> Increases substantive-phase quality by 25–40% (Fisher &amp; Geiselman, 1992).</p>
+            <label class="flex items-center gap-3 mt-3" style="display:flex;"><input id="practice-ack" type="checkbox"/><span class="text-sm font-medium">Practice narrative completed.</span></label>
+          </div>
+        </details>
+        <details class="border-2 border-black bg-white">
+          <summary class="p-5 flex justify-between items-center">
+            <h3 class="font-headline text-xl font-bold">Interoceptive Vocabulary Scaffold · Reference</h3>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="p-6 border-t border-black">
+            <p class="text-sm italic mb-4">Ask the open-ended body question first. Wait a minimum of 10 seconds. Only offer a vocabulary menu if the student gives a minimal or vague response. Action-impulse descriptors ("wanted to hit," "wanted to run") are evidence of autonomic state, not behavioral intent.</p>
+            <div id="vocab-tables" class="space-y-4"></div>
+          </div>
+        </details>
+      </section>
+
+      <!-- DIVIDER -->
+      <div class="my-14 border-t-4 border-black"></div>
+      <h2 class="font-headline text-4xl font-bold mb-2">The Nine Interview Domains</h2>
+      <p class="text-sm italic text-ink-soft mb-8">Domains 1–7 are mandatory. Domains 8–9 are conditional — ask when criteria listed on their headers are met. Domain order is not rigid: follow the student when they bring up a topic spontaneously, shift to easier domains if the student dysregulates.</p>
+
+      <div id="domains-root" class="space-y-0"></div>
+
+      <!-- CLOSURE -->
+      <section class="mt-16 border-2 border-black bg-white" id="closure-section">
+        <div class="p-6 bg-black text-white flex justify-between items-center">
+          <h2 class="font-headline text-2xl font-bold uppercase tracking-tight">Closure · 6-Step Scripted Sequence</h2>
+          <span class="text-[.6rem] font-bold uppercase tracking-widest">Complete in order</span>
+        </div>
+        <div id="closure-steps" class="divide-y-2 divide-black"></div>
+      </section>
+
+      <!-- OBSERVATION LOG -->
+      <section class="mt-12" id="observation-log"></section>
+
+      <!-- SAFETY SCORING RUBRIC (reference) -->
+      <section class="mt-12 border-2 border-black bg-white p-8">
+        <h2 class="font-headline text-3xl font-bold mb-4">Safety Domain Scoring · Reference</h2>
+        <p class="text-sm italic text-ink-soft mb-5">For team deliberation only. The interviewer does not score on behalf of the team. Score reflects the <em>student's perceived</em> safety mechanism, not the severity of consequences.</p>
+        <div id="safety-rubric" class="overflow-x-auto"></div>
+      </section>
+
+      <!-- FINAL OBSERVATIONS (interviewer narrative for MDR team) -->
+      <section class="mt-12 border-2 border-black bg-white p-8">
+        <h2 class="font-headline text-3xl font-bold mb-4">Key Data for MDR Team</h2>
+        <p class="text-sm italic text-ink-soft mb-4">The three most significant findings from this interview relevant to manifestation analysis. This is a summary for the team, not a determination.</p>
+        <div class="space-y-3">
+          <div><label>Finding 1</label><textarea id="finding-1" rows="2"></textarea></div>
+          <div><label>Finding 2</label><textarea id="finding-2" rows="2"></textarea></div>
+          <div><label>Finding 3</label><textarea id="finding-3" rows="2"></textarea></div>
+        </div>
+        <div class="mt-5">
+          <label>Overall Reliability (interviewer judgment)</label>
+          <select id="reliability">
+            <option value="">— select —</option>
+            <option>Highly reliable — clear, consistent, detailed, emotionally coherent</option>
+            <option>Moderately reliable — mostly clear, some gaps or inconsistencies</option>
+            <option>Limited reliability — fragmented, inconsistent, or significant shutdown</option>
+            <option>Unable to assess</option>
+          </select>
+        </div>
+        <div class="mt-3"><label>Reasoning</label><textarea id="reliability-reason" rows="2"></textarea></div>
+      </section>
+
+      <!-- FOOTER ACTION -->
+      <div class="mt-20 pt-10 border-t-4 border-black flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="flex flex-col">
+          <span class="text-[.65rem] font-black uppercase tracking-widest text-ink-soft">Archive Status</span>
+          <span id="footer-stamp" class="text-xs font-bold">Draft not saved</span>
+        </div>
+        <div class="flex gap-3 flex-wrap">
+          <button class="btn-secondary" onclick="saveDraft()">Save as Draft</button>
+          <button class="btn-primary" onclick="generateReport()">Generate Report &amp; Print</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRINT-ONLY REPORT -->
+    <div id="print-report" class="max-w-5xl mx-auto px-10 py-14"></div>
+  </main>
+</div>
+
+<!-- FOOTER -->
+<footer class="ml-60 border-t-2 border-black px-10 py-8 bg-black text-white no-print">
+  <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between gap-6">
+    <div>
+      <span class="font-headline text-lg font-bold italic">GUARD Protocol Engine</span>
+      <p class="text-[.7rem] text-stone-400 mt-2 max-w-sm">Every determination is a legal and moral obligation. The tool guides; the IEP team decides.</p>
+    </div>
+    <div class="flex gap-10 text-[.7rem]">
+      <div><span class="block font-bold uppercase tracking-widest text-stone-500 mb-1">Protocol</span><span class="block">Appendix D v4.0 Final</span><span class="block">37 fields · 9 domains</span></div>
+      <div><span class="block font-bold uppercase tracking-widest text-stone-500 mb-1">Research base</span><span class="block">NICHD Investigative Protocol</span><span class="block">Mahler Interoception Curriculum</span></div>
+    </div>
+  </div>
+</footer>
+
+<!-- RELUCTANCE DRAWER -->
+<button class="drawer-btn btn-primary no-print" onclick="toggleDrawer()"><span class="material-symbols-outlined align-middle mr-1" style="font-size:16px;">self_care</span>Reluctance States</button>
+<aside id="reluctance-drawer" class="no-print">
+  <div class="flex justify-between items-start">
+    <h3>Reluctance States · Response Playbook</h3>
+    <button class="btn-ghost" onclick="toggleDrawer()"><span class="material-symbols-outlined">close</span></button>
+  </div>
+  <p class="text-sm italic text-ink-soft">Four recognizable intermediate states during a post-incident interview. Consult before pushing further.</p>
+  <div id="reluctance-table"></div>
+</aside>
+
+<script>
+// ===========================================================
+// DATA
+// ===========================================================
+const BIAS_QUESTIONS = [
+  { id:'bias-1', q:'1. What do I already believe happened in this incident?', help:'Write out your current understanding based on the incident report, staff accounts, and any information you already have. Be specific about what happened, who did what, and what caused it.' },
+  { id:'bias-2', q:'2. What outcome am I expecting — manifestation or non-manifestation?', help:'Be honest. Neither answer is wrong. This exercise just makes you aware of it.' },
+  { id:'bias-3', q:'3. Am I approaching this student with assumptions about whether the behavior was disability-related?', help:'What stereotype or assumption about their disability are you carrying into this interview?' },
+  { id:'bias-4', q:'4. What would I need to hear from the student to change my current belief?', help:'If leaning manifestation — what would make you think it was not? If leaning non-manifestation — what would make you think it was?' },
+];
+
+const CULTURAL_QUESTIONS = [
+  { id:'cult-1', q:'1. What is my own cultural identity?', help:'Ethnicity, race, religion, class, family constellation, ability status, and other identity dimensions salient to you.' },
+  { id:'cult-2', q:'2. What are my assumptions about this student\u2019s cultural identity?', help:'What do I know about their background? What am I assuming or not knowing?' },
+  { id:'cult-3', q:'3. What cultural dimensions are salient to this student?', help:'Race/ethnicity, family structure, religion, language, class, ability, gender, sexual orientation, immigration status.' },
+  { id:'cult-4', q:'4. Do I carry stereotypes or assumptions about this student based on their cultural identity? Where do they come from?', help:'' },
+  { id:'cult-5', q:'5. What cultural practices or values might be informing their behavior?', help:'Direct eye contact, silence, and verbal expressiveness vary across cultures.' },
+  { id:'cult-6', q:'6. What assumptions might I be making about "normal" emotional expression?', help:'What does remorse, compliance, honesty, respect look like in this student\u2019s culture?' },
+  { id:'cult-7', q:'7. Am I prepared to hear and honor emotional expressions that don\u2019t match my cultural norms?', help:'Anger-not-sadness; minimal engagement as respect; cool pose as dignity protection.' },
+];
+
+const ENV_CHECKS = [
+  'Private space — cannot be overheard; student cannot see the person they are discussing',
+  'Neutral territory — not the AP office, discipline office, or punishment-associated space',
+  'No authority figures visible (principal, disciplining staff, police)',
+  'Seating at an angle (not directly across). No physical barrier between adult and student.',
+  'Sensory-friendly — not near gym, loud hallways, or fluorescent-heavy areas',
+  'Accessible to student\u2019s physical, sensory, and communication needs',
+  'Within 3 school days of the incident',
+  'Student is in a typically-regulated window of the day',
+  'Qualified interpreter present if student uses ASL, another language, or AAC',
+];
+
+const GROUND_RULES = {
+  hs: [
+    'If I ask you something and you don\u2019t know the answer, just say "I don\u2019t know." That\u2019s completely fine. I don\u2019t want you to guess or make something up. Only tell me things you actually remember.',
+    'If I say something that\u2019s wrong or doesn\u2019t match what you remember, please tell me. You know what happened and I don\u2019t — so if I get it wrong, just correct me.',
+    'If you don\u2019t understand a question, that\u2019s okay. Tell me, and I\u2019ll ask it a different way.',
+    'I only want you to tell me things that really happened — not what you think I want to hear, not what might have happened, just what actually happened.',
+  ],
+  ms: [
+    'If I ask you something and you don\u2019t know the answer, just say "I don\u2019t know." That\u2019s completely fine. Only tell me things you actually remember.',
+    'If I say something that\u2019s wrong or doesn\u2019t match what you remember, please tell me. You know what happened and I don\u2019t.',
+    'If you don\u2019t understand a question, say so and I\u2019ll ask it a different way.',
+    'Only tell me things that really happened. Don\u2019t tell me things you think I want to hear.',
+  ],
+  ue: [
+    'If you don\u2019t know something, just say "I don\u2019t know." Don\u2019t guess.',
+    'If I say something wrong, please tell me. You know what happened and I don\u2019t.',
+    'If you don\u2019t understand my question, say so and I\u2019ll ask it a different way.',
+    'Only tell me things that really happened. Don\u2019t tell me things you think I want to hear.',
+  ],
+};
+
+const VOCAB_TIERS = [
+  { id:'t1', title:'Tier 1 · Pre-reader / AAC · Icon-Based',
+    note:'Point and name. Binary choice if needed. Accept "I don\u2019t know" as valid.',
+    rows:[
+      ['Hands / Arms','still · moving · hot · cold · wet-sweaty · tight · loose'],
+      ['Feet / Legs','still · moving · hot · cold · strong-heavy · light-weak'],
+      ['Stomach','sick-nauseous · butterflies · knotted · calm · I don\u2019t know'],
+      ['Heart','fast-pounding · slow-quiet · normal · I don\u2019t know'],
+      ['Head','foggy-confused · clear-focused · tired · busy-racing'],
+      ['Whole body','hot-energized · cold-numb · relaxed · tight-frozen · I don\u2019t know'],
+    ] },
+  { id:'t2', title:'Tier 2 · Upper Elementary · Opposites',
+    note:'Offer opposites as binary choice, not suggestion. Always include "or something else?"',
+    rows:[
+      ['Hands / Arms','tight / loose · shaky / still · hot / cold · sweaty / dry'],
+      ['Feet / Legs','fidgety / still · heavy / light · frozen / moving · want to run / want to stay'],
+      ['Stomach','knotted / calm · sick / fine · butterflies / nothing · tight / relaxed'],
+      ['Heart','fast / slow · pounding / quiet · fluttery / steady · very loud / barely feel it'],
+      ['Head / Eyes','foggy / clear · blurry / focused · loud inside / quiet inside · dizzy / steady'],
+      ['Whole body','tense / relaxed · hot / cold · numb / feeling everything · big / small'],
+    ] },
+  { id:'t3', title:'Tier 3 · MS / HS · Expanded Descriptors',
+    note:'Action-impulse words ("wanted to hit," "wanted to run") are autonomic-state evidence, not behavioral intent.',
+    rows:[
+      ['Hands / Arms','clenched, fisted, tight, shaky, sweaty, cold, hot, still, loose, fast-moving, tingly, numb, rigid, trembling, restless, "wanted to hit something"'],
+      ['Feet / Legs','pacing, fidgety, still, frozen, heavy, light, tapping, shaky, bouncing, trembling, weak, "wanted to run," "legs felt like jelly"'],
+      ['Eyes','blurry, focused, heavy, wide open, narrow, watery, tunnel vision, unable to focus, squinting, staring'],
+      ['Stomach','sick, knotted, dropped, tight, butterflies, calm, numb, empty, churning, growling, aching, pressure'],
+      ['Heart','fast, pounding, racing, thumping, slow, fluttery, skipping, hammering, irregular, weak, "pounding in throat"'],
+      ['Head','foggy, racing thoughts, blank, loud, quiet, pressure, spinning, confused, focused, clear, heavy, "brain shut off"'],
+      ['Whole body','frozen, on fire, electric, heavy, floating, numb, vibrating, exhausted, tense, limp, energized, shutdown, "wanted to explode"'],
+    ] },
+];
+
+const RELUCTANCE = [
+  ['Brief Silence','Pause longer than 5\u201310 seconds; visible thinking','Wait. Do not re-prompt. Wait 15\u201320 seconds minimum. Silence is cognitive work.'],
+  ['Vague / Minimal Response','Monosyllabic answers; non-elaboration despite open-ended prompt','Acknowledge, validate briefly, try a different domain, return later. Do not re-ask same question in different form.'],
+  ['Visible Discomfort without Shutdown','Voice shaking, tears, visible anxiety, but still verbal','Name it: "I see this is really hard." Offer break / regulation support. Honor their choice about continuing.'],
+  ['Full Shutdown','Complete silence, staring, "I\u2019m not talking," dissociation signs','Pause interview entirely. Do not pressure. "Your body is telling me this is too much right now. We can stop." Offer regulation support.'],
+];
+
+const CLOSURE_STEPS = [
+  { n:1, title:'Signal Closure', script:'"We\u2019re done with my questions now."' },
+  { n:2, title:'Gratitude', script:'"Thank you for telling me about this. I know it wasn\u2019t easy, and I appreciate you being honest with me."' },
+  { n:3, title:'Explain Next Steps', script:'"Here\u2019s what happens next: I\u2019m going to write down what you told me and share it with the team at school that decides what happens. That team includes [principal, teachers, counselor, your family, etc.]. They\u2019ll use what you said along with what the other adults saw to make a decision."' },
+  { n:4, title:'Check Emotional State', script:'"How are you feeling right now? Can you tell me?" [Listen. Validate. If dysregulated, offer regulation support before closing.]' },
+  { n:5, title:'Offer Closing Support', script:'"Is there anything you need before you go? Do you want some water? Do you want to sit quietly for a minute?"' },
+  { n:6, title:'Transition to Neutral Topic', script:'"When you leave here, [teacher / counselor / parent] is going to take you back to [location]. I hope you have a good rest of the day."' },
+];
+
+const SAFETY_RUBRIC = {
+  headers: ['Dimension','Score 3 · Full Safety Mechanism','Score 2 · Partial / Compromised','Score 1 · Absent / Blocked'],
+  rows: [
+    ['Perceived threat (D-SAF-01)','No felt threat; perceived as manageable','Some threat; able to regulate; intermittent','Sustained threat; unable to manage; no support'],
+    ['Access to help (D-SAF-03)','Could identify trusted adults; felt safe approaching','Could theoretically ask; some barriers; trusts some adults','Cannot identify safe adults; doesn\u2019t trust; learned helplessness'],
+    ['Locus of safety (D-SAF-04)','External — trusts adults to keep safe','Mixed; sometimes trusts, sometimes self-reliant','Internal only — must self-protect; hypervigilant'],
+    ['Overall','Psychological & physiological safety experienced','Fragile or conditional safety','No reliable safe-adult network; defensive'],
+  ]
+};
+
+// 5 Ps routing map (Section 12.2 of v4 Final)
+const FIVE_PS = {
+  predisposing:  ['D-PHYS-01','D-PHYS-02','D-PHYS-03','D-EMO-01','D-EMO-02','D-UTD-01','D-UTD-02','D-UTD-04','D-SAF-01','D-SAF-02','D-SAF-03','D-SAF-04'],
+  perpetuating:  ['D-CTX-04','D-ENV-01','D-ENV-02','D-ENV-03','D-ENV-04','D-BLG-01','D-BLG-03','D-SAF-03','D-SAF-04'],
+  precipitating: ['D-CTX-01','D-CTX-02','D-CTX-05','D-ENV-02','D-ENV-04'],
+  protective:    ['D-RPR-01','D-RPR-02','D-SAF-03','D-BLG-01','D-BLG-04'],
+  prognostic:    ['D-RPR-02','D-RNT-03','D-RNT-04','D-BLG-01','D-BLG-04'],
+};
+
+const DOMAINS = [
+  // --- Domain 1 ---
+  { id:'D-CTX', num:'01', title:'Context & Antecedents', mandatory:true, conditional:null,
+    opening:{ hs:'I want to start by understanding what was happening before the incident. What was going on for you that morning or day? What was happening in class?',
+              ms:'I want to understand what was happening before the incident. What was going on for you that day?',
+              ue:'I want to know what was happening before the incident. What was going on that day?' },
+    banners: [],
+    notes: [],
+    questions: [
+      { id:'D-CTX-01', label:'Temporal Context', qtype:'Inv.',
+        prompts:{ hs:'Walk me through your day from when you woke up until [the incident]. What was happening? What were you doing?',
+                  ms:'Tell me about your day before it happened. What happened from when you got up until [the incident]?',
+                  ue:'Tell me what happened that day before it happened. What were you doing?' },
+        routing:'Manifestation / Behavior Analysis' },
+      { id:'D-CTX-02', label:'Immediate Antecedent', qtype:'Dir.',
+        prompts:{ hs:'What was happening right before it happened? Who was around? What was being asked of you?',
+                  ms:'Right before it happened, what was going on? Who was there?',
+                  ue:'Right before, what happened? Who was there?' },
+        routing:'Manifestation / FBA' },
+      { id:'D-CTX-03', label:'Instructions and Expectations', qtype:'Dir.',
+        prompts:{ hs:'What were you told to do? What was the assignment or expectation?',
+                  ms:'What did the teacher ask you to do?',
+                  ue:'What did the teacher ask you to do?' },
+        routing:'Pedagogical Fit / IEP Alignment' },
+      { id:'D-CTX-04', label:'IEP Service Delivery Context', qtype:'Opt.',
+        prompts:{ hs:'Were you supposed to have a [specific service: paraprofessional, audio book, extended time, small group] during this time? Was that happening?',
+                  ms:'Were you supposed to have help with [specific service] right then? Did you get it?',
+                  ue:'Were you supposed to get help from [paraprofessional / service provider]? Were they there?' },
+        routing:'IEP Fidelity / Constructive Removal Detection' },
+      { id:'D-CTX-05', label:'Perceived Control', qtype:'Dir.',
+        prompts:{ hs:'Did you feel like you had any choice in what you were being asked to do? Or did it feel like you had to do it?',
+                  ms:'Did you feel like you could choose, or did it feel like you had to do it?',
+                  ue:'Could you choose, or did you have to do it?' },
+        routing:'Intentionality / Disability Manifestation' },
+    ]},
+  // --- Domain 2 ---
+  { id:'D-PHYS', num:'02', title:'Physiological State', mandatory:true, conditional:null,
+    opening:{ hs:'Now I want to understand what was happening inside your body right before and during the incident. What was your body doing?',
+              ms:'Now I want to understand what your body was doing right before and during it. What was your body doing?',
+              ue:'Now tell me about your body before and during it.' },
+    banners:[{kind:'info', title:'Vocabulary Scaffolding', body:'If student gives minimal or vague response, wait 10 seconds, then offer Tier 2 or Tier 3 vocabulary from the reference section above. Present as menu, not as suggestion.'}],
+    notes:[],
+    questions:[
+      { id:'D-PHYS-01', label:'Pre-Incident Physiological Baseline', qtype:'Inv.',
+        prompts:{ hs:'What was your body doing right before it happened? Your hands, your heart, your breathing — what was happening?',
+                  ms:'Before it happened, what was your body doing? Your hands, your heart, your stomach — what did it feel like?',
+                  ue:'Before it happened, what was your body doing? How did your body feel?' },
+        routing:'Manifestation / Polyvagal Analysis' },
+      { id:'D-PHYS-02', label:'Physiological Changes During Incident', qtype:'Inv.',
+        prompts:{ hs:'During it, what happened in your body? Did anything change? Tell me everything about that.',
+                  ms:'During it, what was your body doing? Did anything change?',
+                  ue:'During it, what did your body do? What changed?' },
+        routing:'Manifestation / Dysregulation Evidence' },
+      { id:'D-PHYS-03', label:'Action Impulses & Regulation Capacity', qtype:'Inv.',
+        prompts:{ hs:'During that moment, what was your body wanting to do? Was there an impulse or urge to do something — like run, fight, freeze, or something else?',
+                  ms:'During it, what did your body want to do? Did you feel like running, or fighting, or just freezing?',
+                  ue:'What did your body want to do? Did you want to run, or hit, or just freeze?' },
+        routing:'Manifestation / Loss of Control Evidence' },
+      { id:'D-PHYS-04', label:'Recovery Timeline', qtype:'Dir.',
+        prompts:{ hs:'How long did that physiological state last? When did your body start to calm down? Right away, or did it take time?',
+                  ms:'How long did it last? When did your body calm down? Right away, or later?',
+                  ue:'How long did it last? When did it stop?' },
+        routing:'Manifestation / Arousal State Analysis' },
+    ]},
+  // --- Domain 3 ---
+  { id:'D-EMO', num:'03', title:'Emotional State & Affect Regulation', mandatory:true, conditional:null,
+    opening:{ hs:'I want to understand what you were feeling emotionally, before and during. This is not about making a judgment of you. It\u2019s about understanding your experience.',
+              ms:'I want to understand how you were feeling — before and during. This is not about judging. It\u2019s about understanding what you felt.',
+              ue:'I want to know how you felt, before and during.' },
+    banners:[
+      {kind:'info', title:'Flat Affect Protection', body:'If the student shows flat affect, dissociation, or shutdown, acknowledge: "I notice you\u2019re being pretty quiet / not showing much emotion about this. That\u2019s okay. Some people protect themselves by staying calm when talking about hard things. Whether you\u2019re showing emotion or not, I want to hear what you actually felt."'}
+    ],
+    notes:[],
+    questions:[
+      { id:'D-EMO-01', label:'Emotional State Pre-Incident', qtype:'Inv.',
+        prompts:{ hs:'What were you feeling emotionally right before it happened? Scared, frustrated, sad, angry — what was it?',
+                  ms:'Before it happened, how were you feeling? Angry, sad, scared, frustrated?',
+                  ue:'Before it happened, how did you feel? Sad, mad, scared, or something else?' },
+        routing:'Manifestation / Trigger Analysis' },
+      { id:'D-EMO-02', label:'Emotional Intensity and Overwhelm', qtype:'Dir.',
+        prompts:{ hs:'How intense was that feeling? Like a 3 out of 10, or more like an 8 or 9?',
+                  ms:'How big was that feeling? Small, medium, or really big?',
+                  ue:'Was it a little feeling or a big feeling?' },
+        routing:'Manifestation / Overwhelm Evidence' },
+      { id:'D-EMO-03', label:'Emotional Cognition During Incident', qtype:'Inv.',
+        prompts:{ hs:'During the moment it happened, what were you feeling? Did your emotion stay the same, or did it change?',
+                  ms:'During it, what did you feel? Did it change or stay the same?',
+                  ue:'During it, how did you feel?' },
+        routing:'Manifestation / Amygdala Dominance Evidence' },
+      { id:'D-EMO-04', label:'Shame and Self-Judgment', qtype:'Inv.',
+        prompts:{ hs:'How do you feel about what happened now that you\u2019re talking about it? What do you think about yourself for doing that?',
+                  ms:'How do you feel about it now? What do you think about yourself?',
+                  ue:'How do you feel about it now?' },
+        warning:{ title:'Critical Remorse Trap Safeguard', body:'Absence of shame or remorse is NOT evidence of willfulness. Flat affect, anger, or defensiveness are protective responses. Students with autism, ADHD, or trauma histories may have genuine difficulty accessing or expressing remorse even when they fully understand impact. Do not score absence of remorse as non-manifestation.' },
+        routing:'Repair Readiness / Restorative Justice' },
+    ]},
+  // --- Domain 4 ---
+  { id:'D-ENV', num:'04', title:'Environmental Factors & Perceived Triggers', mandatory:true, conditional:null,
+    opening:{ hs:'I want to understand what was happening around you that might have contributed. Were there things in the environment — people, sounds, activities, changes — that affected you?',
+              ms:'I want to know what was happening around you. Noise, people, changes — what affected you?',
+              ue:'I want to know about what was around you. Noise, people, things being different — what affected you?' },
+    banners:[], notes:[],
+    questions:[
+      { id:'D-ENV-01', label:'Sensory and Environmental Contributors', qtype:'Inv.',
+        prompts:{ hs:'Were there things in the environment that were hard for you right then? Noise, lights, crowding, activity level, changes to routine — anything that made it harder to manage yourself?',
+                  ms:'Was there anything about what was happening around you that was hard? Like noise, people being too close, things being different?',
+                  ue:'Was anything hard about what was happening? Noise, too many people, things being different?' },
+        routing:'Manifestation / Accommodation Needs' },
+      { id:'D-ENV-02', label:'Social-Environmental Factors', qtype:'Inv.',
+        prompts:{ hs:'Were there social things happening that affected you? Peer conflict, feeling excluded, pressure from friends, something someone said — anything like that?',
+                  ms:'Was anything happening with other kids? People being mean, leaving you out, or pressure?',
+                  ue:'Was anything happening with other kids? Were they being mean, or leaving you out?' },
+        routing:'Manifestation / Belonging Analysis' },
+      { id:'D-ENV-03', label:'Staff Interaction & Perceived Respect', qtype:'Inv.',
+        prompts:{ hs:'How were the adults treating you right before this happened? Did you feel respected, or did it feel like they didn\u2019t listen to you, or were being unfair?',
+                  ms:'How were the teachers acting? Did you feel like they were listening to you, or treating you unfairly?',
+                  ue:'Were the teachers being nice, or treating you in a way that didn\u2019t feel fair?' },
+        routing:'Manifestation / Relationship Quality' },
+      { id:'D-ENV-04', label:'Changes to Routine / Unexpected Transitions', qtype:'Dir.',
+        prompts:{ hs:'Was anything different about that day or that class? Different teacher, different assignment, something changed from what you expected?',
+                  ms:'Was anything different? Different activity, different teacher, something unexpected?',
+                  ue:'Was anything different about that day?' },
+        routing:'Manifestation / Predictability Needs' },
+    ]},
+  // --- Domain 5 ---
+  { id:'D-UTD', num:'05', title:'Understanding & Decision-Making', mandatory:true, conditional:null,
+    opening:{ hs:'I want to understand what you were thinking during this. Were you making a choice, or did it just happen?',
+              ms:'I want to know what you were thinking. Were you choosing, or did it just happen?',
+              ue:'I want to know what you were thinking. Did you choose, or did it just happen?' },
+    banners:[], notes:[],
+    questions:[
+      { id:'D-UTD-01', label:'Cognitive Clarity During Incident', qtype:'Inv.',
+        prompts:{ hs:'In that moment when it happened, were you able to think clearly? Or did your thinking go fuzzy or blank?',
+                  ms:'When it happened, could you think, or did your mind go blank?',
+                  ue:'Could you think, or did your brain just stop?' },
+        routing:'Manifestation / Prefrontal Access Evidence' },
+      { id:'D-UTD-02', label:'Awareness of Consequences', qtype:'Dir.',
+        prompts:{ hs:'Did you think about what would happen if you [behavior]? Were you thinking about the consequences?',
+                  ms:'Did you think about what would happen? Were you thinking about getting in trouble?',
+                  ue:'Did you think about what would happen?' },
+        routing:'Manifestation / Impulse Control Capacity' },
+      { id:'D-UTD-03', label:'Intentionality of Behavior', qtype:'Inv.',
+        prompts:{ hs:'Did you choose to [behavior], or did it just happen? Were you trying to [outcome], or did you not know what you were doing?',
+                  ms:'Did you mean to do it, or did it just happen?',
+                  ue:'Did you mean to do it, or did it just happen?' },
+        routing:'Manifestation / Volitional vs. Impulsive' },
+      { id:'D-UTD-04', label:'Alternative Behavior Awareness', qtype:'Dir.',
+        prompts:{ hs:'In that moment, did you know you could do something else? Did you have any other options, or did it feel like [behavior] was the only thing you could do?',
+                  ms:'Did you know you could do something else? Or did it feel like that was the only thing?',
+                  ue:'Did you know you could do something else?' },
+        routing:'Manifestation / Flexibility Evidence' },
+    ]},
+  // --- Domain 6 ---
+  { id:'D-SAF', num:'06', title:'Safety Context', mandatory:true, conditional:null,
+    opening:{ hs:'I want to understand how safe you felt — in your body, around the adults, in that moment. This is about your experience, not about whether the consequences were fair.',
+              ms:'I want to understand how safe you felt — in your body, around adults, in that moment.',
+              ue:'I want to know if you felt safe in that moment.' },
+    banners:[
+      {kind:'info', title:'Safety Construct Definition', body:'This is NOT about whether the student was actually in danger, whether consequences were "harsh," or remorse/compliance. This IS about the student\u2019s subjective experience of threat, whether they could access help, and whether they had autonomy.'},
+      {kind:'warning', title:'Leading Question Self-Check (before D-SAF-01)', body:'DO NOT ask: "Were you afraid?" [assumes fear] / "Did that feel scary?" [assumes threat]. DO ask: "How did you feel in that moment?" then listen for threat/safety content. Normalization-then-ask: "Sometimes when people are overwhelmed, they feel trapped or can\u2019t see options. Did you feel any of that, or was it different for you?"'}
+    ],
+    notes:[],
+    questions:[
+      { id:'D-SAF-01', label:'Perceived Threat or Danger', qtype:'Inv.',
+        prompts:{ hs:'During that moment, did you feel like you were in danger? Or like something bad might happen to you? Or like you needed to protect yourself?',
+                  ms:'Did you feel scared or in danger? Like something bad might happen?',
+                  ue:'Did you feel scared? Like something bad might happen?' },
+        routing:'Manifestation / Survival Response Evidence' },
+      { id:'D-SAF-02', label:'Normalization-then-Ask (Leading Question Safeguard)', qtype:'Opt.',
+        prompts:{ hs:'Sometimes when people are overwhelmed, they feel trapped or can\u2019t see options. Did you feel any of that, or was it different for you?',
+                  ms:'Sometimes people feel trapped or like they can\u2019t see what to do. Did any of that happen, or was yours different?',
+                  ue:'Sometimes people feel stuck and can\u2019t see what to do. Did any of that happen, or was yours different?' },
+        routing:'Interview Fidelity / Quality Assurance' },
+      { id:'D-SAF-03', label:'Access to Trusted Adults', qtype:'Dir.',
+        prompts:{ hs:'If you needed help in that moment — whether from a teacher, counselor, or someone — do you think you could have asked? Or did it not feel safe to ask?',
+                  ms:'If you needed help, could you have asked a teacher? Or didn\u2019t it feel safe?',
+                  ue:'Could you have asked for help? Or didn\u2019t it feel safe?' },
+        routing:'Manifestation / Support System Evidence' },
+      { id:'D-SAF-04', label:'Internal vs. External Locus of Safety', qtype:'Dir.',
+        prompts:{ hs:'In that moment, who was responsible for keeping you safe? Did you feel like adults were keeping you safe, or did you feel like you had to protect yourself?',
+                  ms:'Did you feel like the teacher was keeping you safe, or like you had to protect yourself?',
+                  ue:'Did you feel safe with the teacher, or like you had to protect yourself?' },
+        routing:'Manifestation / Trust and Autonomy Evidence' },
+    ]},
+  // --- Domain 7 ---
+  { id:'D-RPR', num:'07', title:'Repair & Restoration', mandatory:true, conditional:null,
+    opening:{ hs:'As we finish, I want to ask about what would help — whether there\u2019s something you want to say or something that would help you move forward.',
+              ms:'As we finish, I want to know what would help you.',
+              ue:'Last thing — what would help?' },
+    banners:[
+      {kind:'warning', title:'Do Not Require Remorse or Repair', body:'If the student offers repair, that is meaningful data. If they don\u2019t, that is also data and does NOT indicate non-manifestation. Students with autism may have difficulty with the social script of apology. Students with trauma may protect themselves through anger. These are NOT evidence of lack of understanding.'}
+    ],
+    notes:[],
+    questions:[
+      { id:'D-RPR-01', label:'Repair Capacity and Willingness', qtype:'Inv.',
+        prompts:{ hs:'Is there anything you want to say to [person involved] or to the people at school? Anything you want to communicate?',
+                  ms:'Is there anything you want to tell [person] or the teachers?',
+                  ue:'Do you want to say anything to [person]?' },
+        routing:'Restorative Justice / Accountability Readiness' },
+      { id:'D-RPR-02', label:'Future Safety and Success Conditions', qtype:'Inv.',
+        prompts:{ hs:'What do you need to feel safe coming back to school? What would help you succeed? What would be different?',
+                  ms:'What would help you feel okay at school? What would help you do better?',
+                  ue:'What would make school okay for you? What would help?' },
+        routing:'IEP / Behavior Plan / Support Needs' },
+      { id:'D-RPR-03', label:'Closing Question — Student Voice', qtype:'Inv.',
+        prompts:{ hs:'Is there anything else I should know? Anything I missed or didn\u2019t ask about that matters?',
+                  ms:'Is there anything else I should know about?',
+                  ue:'Is there anything else you want to tell me?' },
+        routing:'Data Completeness / Student Engagement' },
+    ]},
+  // --- Domain 8 (conditional) ---
+  { id:'D-BLG', num:'08', title:'Belonging & Community Connectedness', mandatory:false, conditional:'Ask if: behavior involved social dynamics · student shows evidence of not belonging · student is navigating identity-based discrimination or microaggressions',
+    opening:{ hs:'I want to understand how you experience being part of this school community.',
+              ms:'I want to understand how you feel about being at school.',
+              ue:'I want to know how it feels to be at school for you.' },
+    banners:[], notes:[],
+    questions:[
+      { id:'D-BLG-01', label:'Sense of Belonging to School Community', qtype:'Inv.',
+        prompts:{ hs:'Do you feel like you belong at this school? Like you\u2019re part of the community, or like you\u2019re on the outside?',
+                  ms:'Do you feel like you\u2019re part of the school? Or do you feel like you\u2019re on the outside?',
+                  ue:'Do you feel like you belong at school? Or do you feel different?' },
+        routing:'Belonging Analysis / Manifestation Context' },
+      { id:'D-BLG-02', label:'Peer Relationships and Social Status', qtype:'Inv.',
+        prompts:{ hs:'How are your relationships with other students? Do you have friends, or is that hard?',
+                  ms:'Do you have friends at school? How do you feel about the other kids?',
+                  ue:'Do you have friends? Do the kids like you?' },
+        routing:'Social-Emotional Functioning / IEP' },
+      { id:'D-BLG-03', label:'Role of Belonging Struggles in the Incident', qtype:'Dir.',
+        prompts:{ hs:'Did what happened on [date] have anything to do with how you fit in or how you feel about your place at school?',
+                  ms:'Did what happened have something to do with fitting in or being friends with people?',
+                  ue:'Did it have something to do with the other kids or being friends?' },
+        routing:'Manifestation / Social Driver Analysis' },
+      { id:'D-BLG-04', label:'Future Belonging and Reintegration', qtype:'Inv.',
+        prompts:{ hs:'When you come back to school, how do you want to be connected to the community? What would help you feel like you belong?',
+                  ms:'When you come back, what would help you feel like you fit in better?',
+                  ue:'When you come back, what would help you feel okay?' },
+        routing:'Re-entry Planning / Belonging-Centered Supports' },
+      { id:'D-BLG-05', label:'Identity and Discrimination', qtype:'Dir.', equityGate:true,
+        prompts:{ hs:'Are you experiencing anything at school because of your [race/ethnicity/gender/sexual orientation/disability/religion] that affects how you feel about being here? Has anything like that come up related to this incident?',
+                  ms:'Has anything happened at school because of who you are [race/ethnicity/disability/etc.] that made this harder?',
+                  ue:'Is anything happening at school because of who you are that made this harder?' },
+        routing:'Manifestation / Equity Analysis / Appendix R' },
+    ]},
+  // --- Domain 9 (conditional) ---
+  { id:'D-RNT', num:'09', title:'Repair & Re-Entry', mandatory:false, conditional:'Ask if: student has been or will be removed (suspended, alt placement, expelled) · behavior caused documented harm to another person / group · MDR team is considering restorative practices',
+    opening:{ hs:'Since you may be returning to a different setting, I want to understand what support would help you come back successfully.',
+              ms:'Since you may be coming back to a different setting, I want to know what would help.',
+              ue:'I want to know what would help you come back.' },
+    banners:[], notes:[],
+    questions:[
+      { id:'D-RNT-01', label:'Student Understanding of Impact', qtype:'Inv.',
+        prompts:{ hs:'Do you understand how your behavior affected [person / people / class / community]? What do you think happened for them?',
+                  ms:'Do you understand how it affected [person / the class]? What do you think happened for them?',
+                  ue:'Do you understand how it affected [person]?' },
+        warning:{ title:'Evidence Collection, Not Consequence Delivery', body:'Do NOT frame as confession of wrongdoing or enforce shame/guilt. Purpose is to understand student\u2019s awareness.' },
+        routing:'Harm Awareness / Accountability Evidence' },
+      { id:'D-RNT-02', label:'Accountability Orientation', qtype:'Inv.',
+        prompts:{ hs:'How do you think this should be handled? What would be fair? What would help make things right?',
+                  ms:'What do you think should happen? What would be fair? What would help fix it?',
+                  ue:'What do you think should happen? What would be fair?' },
+        routing:'Restorative Justice / Accountability Readiness' },
+      { id:'D-RNT-03', label:'Supports Needed for Successful Re-Entry', qtype:'Inv.',
+        prompts:{ hs:'What supports would help you come back to school successfully? What would need to be different about the environment, the people, the expectations?',
+                  ms:'What would help you come back and be successful? What would need to change?',
+                  ue:'What would help you come back? What would be different?' },
+        routing:'IEP / Behavior Plan Modifications / Support Needs' },
+      { id:'D-RNT-04', label:'Student as Co-Designer of Re-Entry Plan', qtype:'Inv.',
+        prompts:{ hs:'If we were designing a plan to help you come back successfully, what would that look like? What would you need from teachers, counselors, peers?',
+                  ms:'If we made a plan to help you come back, what would you need?',
+                  ue:'What would help you come back?' },
+        routing:'Re-entry Planning / Student Voice Integration' },
+    ]},
+];
+
+const OBSERVATION_LOG = {
+  sections: [
+    { id:'obs-pre', title:'A · Pre-Interview',
+      items: [
+        { type:'checkbox', id:'obs-trusted', label:'Interview conducted by trusted adult per protocol' },
+        { type:'checkbox', id:'obs-private', label:'Private, non-punitive space used' },
+        { type:'checkbox', id:'obs-access', label:'Accessible to student' },
+        { type:'select', id:'obs-comfort', label:'Student reported comfort level', options:['—','Comfortable','Somewhat comfortable','Uncomfortable'] },
+      ]},
+    { id:'obs-comm', title:'B · Communication & Regulation Observations',
+      items: [
+        { type:'select', id:'obs-style', label:'Overall communication style', options:['—','Verbose / detailed','Moderate / typical','Minimal / sparse','Silent / non-verbal'] },
+        { type:'select', id:'obs-tier', label:'Vocabulary development level used', options:['—','Tier 1 (pre-reader / AAC)','Tier 2 (opposites)','Tier 3 (expanded)','Beyond scaffolding'] },
+        { type:'select', id:'obs-processing', label:'Language processing observations', options:['—','Fast processing, quick responses','Normal processing time','Slow processing, long wait times needed','Difficulty understanding questions'] },
+        { type:'checkboxes', id:'obs-dysreg', label:'Signs of dysregulation observed (check all that apply)',
+          options:['Voice volume / rate increased','Breathing changes','Trembling or tension','Emotional flooding','Dissociation (spacing, staring)','Avoidance (subject changes, refusal)','Flat affect','Freezing'] },
+        { type:'text', id:'obs-breaks', label:'Breaks offered / taken (describe)' },
+      ]},
+    { id:'obs-content', title:'C · Content Observations',
+      items: [
+        { type:'select', id:'obs-memory', label:'Memory coherence', options:['—','Clear, coherent narrative','Fragmented but understandable','Very fragmented','Significant gaps'] },
+        { type:'select', id:'obs-affect', label:'Affective presentation', options:['—','Emotionally congruent','Muted / flat affect','Incongruent affect','Labile affect'] },
+        { type:'text', id:'obs-flat', label:'If flat affect observed, document possible reasons (protective dissociation, autism trait, ADHD presentation, depression, masking)' },
+        { type:'text', id:'obs-inconsistencies', label:'Inconsistencies or notable gaps (describe)' },
+      ]},
+    { id:'obs-clinical', title:'E · Significant Clinical Observations',
+      items: [
+        { type:'checkboxes', id:'obs-autonomic', label:'Autonomic evidence observed',
+          options:['Sympathetic activation (elevated HR, rapid breathing, trembling, sweating)','Parasympathetic shutdown (flat affect, dissociation, disconnection)','Mixed activation','No clear dysregulation'] },
+        { type:'select', id:'obs-cog', label:'Cognitive limitation during high arousal',
+          options:['—','Student demonstrated access to reasoning / decision-making capacity','Student showed difficulty with reasoning / executive function during incident discussion','Student reported cognitive shutdown ("mind went blank") during incident','No clear evidence either way'] },
+        { type:'select', id:'obs-impulse', label:'Evidence of impulsivity or loss of behavioral control',
+          options:['—','Intact impulse control throughout interview','Difficulty with impulse inhibition','Reports loss of behavioral control during incident','No clear evidence'] },
+        { type:'text', id:'obs-disability', label:'Disability-related observations (if documented disability)' },
+      ]},
+  ]
+};
+
+// ===========================================================
+// RENDER + INTERACTION
+// ===========================================================
+let currentBand = 'hs';
+const answers = {};
+const notes = {};
+let threatPaused = null;
+
+// ---- tiny DOM helper (no innerHTML anywhere) ----
+function h(tag, props) {
+  const e = document.createElement(tag);
+  if (props) Object.entries(props).forEach(([k, v]) => {
+    if (v === null || v === undefined || v === false) return;
+    if (k === 'class') e.className = v;
+    else if (k === 'style') e.setAttribute('style', v);
+    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else if (v === true) e.setAttribute(k, '');
+    else e.setAttribute(k, v);
+  });
+  for (let i = 2; i < arguments.length; i++) {
+    const kid = arguments[i];
+    if (kid == null || kid === false) continue;
+    if (Array.isArray(kid)) kid.forEach(k2 => { if (k2 != null) e.appendChild(typeof k2 === 'string' ? document.createTextNode(k2) : k2); });
+    else e.appendChild(typeof kid === 'string' ? document.createTextNode(kid) : kid);
+  }
+  return e;
+}
+function icon(name, size) {
+  const s = h('span', { class: 'material-symbols-outlined', style: 'font-size:' + (size || 18) + 'px;vertical-align:middle;' });
+  s.textContent = name;
+  return s;
+}
+function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+// ---- speech synthesis ----
+function speak(text) {
+  if (!('speechSynthesis' in window)) { alert('Text-to-speech not supported. Try Chrome or Edge.'); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.95;
+  window.speechSynthesis.speak(u);
+}
+
+// ---- speech recognition ----
+const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let activeRec = null, activeBtn = null;
+function toggleDictation(btn, textarea) {
+  if (!Recognition) { alert('Speech-to-text not supported. Try Chrome or Edge on localhost / HTTPS.'); return; }
+  if (activeRec) { activeRec.stop(); return; }
+  const rec = new Recognition();
+  rec.continuous = true; rec.interimResults = true; rec.lang = 'en-US';
+  activeRec = rec; activeBtn = btn;
+  btn.classList.add('recording');
+  clear(btn); btn.appendChild(icon('stop_circle', 16)); btn.appendChild(document.createTextNode(' Stop'));
+  const baseline = textarea.value ? textarea.value + ' ' : '';
+  rec.onresult = e => {
+    let interim = '', finalText = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalText += t; else interim += t;
+    }
+    textarea.value = baseline + finalText + interim;
+    textarea.dispatchEvent(new Event('input'));
+  };
+  rec.onerror = cleanupRec;
+  rec.onend = cleanupRec;
+  rec.start();
+}
+function cleanupRec() {
+  if (activeBtn) {
+    activeBtn.classList.remove('recording');
+    clear(activeBtn);
+    activeBtn.appendChild(icon('mic', 16));
+    activeBtn.appendChild(document.createTextNode(' Record'));
+  }
+  activeRec = null; activeBtn = null;
+}
+
+// ---- bias + cultural lists ----
+function renderTextareaList(root, items) {
+  clear(root);
+  items.forEach(it => {
+    const wrap = h('div', { class: 'dossier-item' });
+    const lbl = h('label', { style: "text-transform:none;font-family:'Newsreader',serif;font-size:1.05rem;font-weight:600;letter-spacing:0;" }, it.q);
+    const help = h('p', { class: 'text-[.75rem] italic text-ink-soft mb-2' }, it.help || '');
+    const ta = h('textarea', { id: it.id, rows: '3' });
+    ta.addEventListener('input', () => { notes[it.id] = ta.value; });
+    wrap.appendChild(lbl); wrap.appendChild(help); wrap.appendChild(ta);
+    root.appendChild(wrap);
+  });
+}
+
+// ---- env checklist ----
+function renderEnvChecklist() {
+  const root = document.getElementById('env-checklist');
+  ENV_CHECKS.forEach((text, i) => {
+    const lbl = h('label', { class: 'flex items-start gap-3 cursor-pointer border border-black bg-surface-container-low p-3', style: 'display:flex;' });
+    const cb = h('input', { type: 'checkbox', id: 'env-' + i, class: 'mt-1' });
+    const sp = h('span', { class: 'text-sm' }, text);
+    lbl.appendChild(cb); lbl.appendChild(sp);
+    root.appendChild(lbl);
+  });
+}
+
+// ---- ground rules ----
+function renderGroundRules() {
+  const root = document.getElementById('ground-rules-script');
+  clear(root);
+  GROUND_RULES[currentBand].forEach((t, i) => {
+    const p = h('p');
+    p.appendChild(h('strong', null, 'Rule ' + (i + 1) + ': '));
+    p.appendChild(document.createTextNode(t));
+    root.appendChild(p);
+  });
+}
+
+// ---- vocab tiers ----
+function renderVocabTables() {
+  const root = document.getElementById('vocab-tables');
+  VOCAB_TIERS.forEach(tier => {
+    const wrap = h('div', { class: 'dossier-item' });
+    wrap.appendChild(h('h4', { class: 'font-headline text-lg font-bold mb-1' }, tier.title));
+    wrap.appendChild(h('p', { class: 'text-[.7rem] italic text-ink-soft mb-3' }, tier.note));
+    const table = h('table', { class: 'w-full text-xs', style: 'border-collapse:collapse;' });
+    const tbody = h('tbody');
+    tier.rows.forEach(r => {
+      const tr = h('tr');
+      tr.appendChild(h('td', { style: 'border:1px solid #000;padding:.4rem .6rem;font-weight:700;width:25%;' }, r[0]));
+      tr.appendChild(h('td', { style: 'border:1px solid #000;padding:.4rem .6rem;' }, r[1]));
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    root.appendChild(wrap);
+  });
+}
+
+// ---- banner helpers ----
+function makeWarningCard(title, body) {
+  const card = h('div', { class: 'warning-card' });
+  card.appendChild(icon('priority_high', 26));
+  const box = h('div');
+  box.appendChild(h('h4', null, title));
+  box.appendChild(h('p', { class: 'text-sm' }, body));
+  card.appendChild(box);
+  return card;
+}
+function makeInfoBanner(title, body) {
+  const card = h('div', { class: 'info-banner' });
+  card.appendChild(h('h4', null, title));
+  card.appendChild(h('p', { class: 'text-sm' }, body));
+  return card;
+}
+
+// ---- domain renderer ----
+function renderDomains() {
+  const root = document.getElementById('domains-root');
+  clear(root);
+  DOMAINS.forEach(d => root.appendChild(renderDomain(d)));
+}
+
+function renderDomain(d) {
+  const section = h('section', { id: 'dom-' + d.id });
+  const det = h('details', { class: 'group' });
+  if (d.mandatory) det.setAttribute('open', '');
+
+  const sum = h('summary', { class: 'domain-header no-print' });
+  const left = h('div');
+  const num = h('span', { class: 'domain-num' });
+  num.appendChild(document.createTextNode('Domain ' + d.num + ' · ' + d.id));
+  if (!d.mandatory) {
+    num.appendChild(document.createTextNode(' '));
+    num.appendChild(h('span', { class: 'domain-cond' }, 'Conditional'));
+  }
+  left.appendChild(num);
+  left.appendChild(h('h2', { class: 'domain-title' }, d.title));
+  sum.appendChild(left);
+  const chev = h('span', { class: 'material-symbols-outlined chevron text-3xl' });
+  chev.textContent = 'expand_more';
+  sum.appendChild(chev);
+  det.appendChild(sum);
+
+  const body = h('div', { class: 'pb-10 space-y-6' });
+
+  // print-visible head
+  const printHead = h('div', { class: 'hidden' });
+  printHead.appendChild(h('h2', { class: 'domain-title', style: 'font-size:1.6rem;margin-bottom:.5rem;' }, 'Domain ' + d.num + ' — ' + d.title));
+  body.appendChild(printHead);
+
+  if (d.conditional) body.appendChild(makeInfoBanner('Conditional — Ask When', d.conditional));
+
+  // Opening frame
+  const openingCard = h('div', { class: 'dossier-item' });
+  openingCard.appendChild(h('span', { class: 'text-[.65rem] font-bold uppercase tracking-widest text-tertiary mb-2 block' }, 'Opening Frame'));
+  const openP = h('p', { class: 'font-headline italic text-lg leading-relaxed', 'data-opening': d.id }, d.opening[currentBand]);
+  openingCard.appendChild(openP);
+  const listenWrap = h('div', { class: 'mt-3' });
+  const listenBtn = h('button', { class: 'btn-ghost' });
+  listenBtn.appendChild(icon('volume_up', 16));
+  listenBtn.appendChild(document.createTextNode(' Listen'));
+  listenBtn.addEventListener('click', () => speak(d.opening[currentBand]));
+  listenWrap.appendChild(listenBtn);
+  openingCard.appendChild(listenWrap);
+  body.appendChild(openingCard);
+
+  (d.banners || []).forEach(b => {
+    body.appendChild(b.kind === 'warning' ? makeWarningCard(b.title, b.body) : makeInfoBanner(b.title, b.body));
+  });
+
+  d.questions.forEach(q => body.appendChild(renderQuestion(q)));
+
+  if (d.id === 'D-SAF') {
+    body.appendChild(makeInfoBanner('Safety Scoring Lives Below', 'A reference rubric appears later in this page for team deliberation. The interviewer does not score.'));
+  }
+
+  det.appendChild(body);
+  section.appendChild(det);
+  return section;
+}
+
+function renderQuestion(q) {
+  const card = h('div', { class: 'question-card' + (q.equityGate ? ' equity-gate' : '') });
+
+  const header = h('div', { class: 'q-header' });
+  header.appendChild(h('span', { class: 'q-label' }, q.id + ' · ' + q.label));
+  const chipClass = q.qtype === 'Inv.' ? 'q-chip inv' : q.qtype === 'Dir.' ? 'q-chip dir' : 'q-chip opt';
+  header.appendChild(h('span', { class: chipClass }, q.qtype));
+  card.appendChild(header);
+
+  const prompt = h('p', { class: 'q-prompt', 'data-prompt-for': q.id });
+  prompt.textContent = q.prompts[currentBand];
+  card.appendChild(prompt);
+
+  if (q.warning) card.appendChild(makeWarningCard(q.warning.title, q.warning.body));
+
+  const tools = h('div', { class: 'q-tools' });
+  const listen = h('button', { class: 'btn-ghost' });
+  listen.appendChild(icon('volume_up', 16));
+  listen.appendChild(document.createTextNode(' Listen'));
+  listen.addEventListener('click', () => speak(q.prompts[currentBand]));
+  tools.appendChild(listen);
+
+  const record = h('button', { class: 'btn-ghost' });
+  record.appendChild(icon('mic', 16));
+  record.appendChild(document.createTextNode(' Record'));
+  tools.appendChild(record);
+
+  const clearBtn = h('button', { class: 'btn-ghost', title: 'Clear this answer' });
+  clearBtn.appendChild(icon('backspace', 16));
+  clearBtn.appendChild(document.createTextNode(' Clear'));
+  tools.appendChild(clearBtn);
+
+  card.appendChild(tools);
+
+  const ta = h('textarea', { id: 'ans-' + q.id, rows: '3', placeholder: "Capture the student\u2019s response in their own language when possible." });
+  ta.addEventListener('input', () => { answers[q.id] = ta.value; });
+  card.appendChild(ta);
+
+  record.addEventListener('click', () => toggleDictation(record, ta));
+  clearBtn.addEventListener('click', () => { ta.value = ''; answers[q.id] = ''; });
+
+  card.appendChild(h('div', { class: 'q-routing' }, 'Routes to → ' + q.routing));
+  return card;
+}
+
+// ---- age band ----
+function setBand(band) {
+  currentBand = band;
+  document.querySelectorAll('#age-band-buttons .age-pill').forEach(b => b.classList.toggle('active', b.dataset.band === band));
+  DOMAINS.forEach(d => {
+    const op = document.querySelector('[data-opening="' + d.id + '"]');
+    if (op) op.textContent = d.opening[band];
+    d.questions.forEach(q => {
+      const p = document.querySelector('[data-prompt-for="' + q.id + '"]');
+      if (p) p.textContent = q.prompts[band];
+    });
+  });
+  renderGroundRules();
+}
+
+// ---- closure ----
+function renderClosure() {
+  const root = document.getElementById('closure-steps');
+  CLOSURE_STEPS.forEach(s => {
+    const row = h('div', { class: 'p-5 grid grid-cols-12 gap-4 items-start' });
+    row.appendChild(h('div', { class: 'col-span-1 font-headline text-3xl font-bold' }, String(s.n)));
+    const mid = h('div', { class: 'col-span-8' });
+    mid.appendChild(h('h4', { class: 'font-bold uppercase text-[.7rem] tracking-widest mb-1' }, s.title));
+    mid.appendChild(h('p', { class: 'font-headline italic text-base leading-relaxed' }, s.script));
+    row.appendChild(mid);
+    const right = h('div', { class: 'col-span-3 flex gap-2 justify-end flex-wrap' });
+    const btn = h('button', { class: 'btn-ghost' });
+    btn.appendChild(icon('volume_up', 16));
+    btn.appendChild(document.createTextNode(' Listen'));
+    btn.addEventListener('click', () => speak(s.script));
+    right.appendChild(btn);
+    const doneLbl = h('label', { class: 'flex items-center gap-2 text-xs', style: 'display:flex;' });
+    doneLbl.appendChild(h('input', { type: 'checkbox', id: 'closure-' + s.n }));
+    doneLbl.appendChild(document.createTextNode(' Done'));
+    right.appendChild(doneLbl);
+    row.appendChild(right);
+    root.appendChild(row);
+  });
+}
+
+// ---- observation log ----
+function renderObservationLog() {
+  const root = document.getElementById('observation-log');
+  const wrap = h('div', { class: 'border-2 border-black bg-white' });
+  const head = h('div', { class: 'p-6 bg-black text-white' });
+  head.appendChild(h('h2', { class: 'font-headline text-2xl font-bold uppercase tracking-tight' }, 'Interviewer Observation Log'));
+  head.appendChild(h('p', { class: 'text-[.7rem] uppercase tracking-widest mt-1 opacity-80' }, 'Informs team interpretation · not a determination'));
+  wrap.appendChild(head);
+
+  OBSERVATION_LOG.sections.forEach(s => {
+    const block = h('div', { class: 'p-6 border-t-2 border-black' });
+    block.appendChild(h('h3', { class: 'font-bold uppercase text-[.7rem] tracking-widest mb-4 text-tertiary' }, s.title));
+    s.items.forEach(it => {
+      const row = h('div', { class: 'mb-4' });
+      if (it.type === 'checkbox') {
+        const lbl = h('label', { class: 'flex items-start gap-3 cursor-pointer', style: 'display:flex;' });
+        lbl.appendChild(h('input', { type: 'checkbox', id: it.id }));
+        lbl.appendChild(h('span', { class: 'text-sm' }, it.label));
+        row.appendChild(lbl);
+      } else if (it.type === 'text') {
+        row.appendChild(h('label', null, it.label));
+        row.appendChild(h('textarea', { id: it.id, rows: '2' }));
+      } else if (it.type === 'select') {
+        row.appendChild(h('label', null, it.label));
+        const sel = h('select', { id: it.id });
+        it.options.forEach(o => sel.appendChild(h('option', null, o)));
+        row.appendChild(sel);
+      } else if (it.type === 'checkboxes') {
+        row.appendChild(h('label', null, it.label));
+        const grid = h('div', { class: 'grid grid-cols-1 md:grid-cols-2 gap-2 mt-1' });
+        it.options.forEach(o => {
+          const l = h('label', { class: 'flex items-start gap-2 text-sm', style: 'display:flex;' });
+          l.appendChild(h('input', { type: 'checkbox', 'data-group': it.id, value: o }));
+          l.appendChild(document.createTextNode(o));
+          grid.appendChild(l);
+        });
+        row.appendChild(grid);
+      }
+      block.appendChild(row);
+    });
+    wrap.appendChild(block);
+  });
+  root.appendChild(wrap);
+}
+
+// ---- safety rubric ----
+function renderSafetyRubric() {
+  const root = document.getElementById('safety-rubric');
+  const table = h('table', { class: 'w-full', style: 'border-collapse:collapse;font-size:.78rem;' });
+  const thead = h('thead');
+  const thr = h('tr');
+  SAFETY_RUBRIC.headers.forEach(hd => {
+    thr.appendChild(h('th', { style: "background:#000;color:#fff;border:1px solid #000;padding:.55rem .7rem;text-align:left;font-family:'Public Sans',sans-serif;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;" }, hd));
+  });
+  thead.appendChild(thr);
+  table.appendChild(thead);
+  const tbody = h('tbody');
+  SAFETY_RUBRIC.rows.forEach(r => {
+    const tr = h('tr');
+    r.forEach((c, i) => {
+      tr.appendChild(h('td', { style: 'border:1px solid #000;padding:.55rem .7rem;' + (i === 0 ? 'font-weight:700;' : '') }, c));
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  root.appendChild(table);
+}
+
+// ---- reluctance drawer ----
+function renderReluctance() {
+  const root = document.getElementById('reluctance-table');
+  const table = h('table');
+  const thead = h('thead');
+  const thr = h('tr');
+  ['State', 'Signs', 'Response'].forEach(hd => thr.appendChild(h('th', null, hd)));
+  thead.appendChild(thr);
+  table.appendChild(thead);
+  const tbody = h('tbody');
+  RELUCTANCE.forEach(r => {
+    const tr = h('tr');
+    tr.appendChild(h('td', null, h('strong', null, r[0])));
+    tr.appendChild(h('td', null, r[1]));
+    tr.appendChild(h('td', null, r[2]));
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  root.appendChild(table);
+}
+function toggleDrawer() { document.getElementById('reluctance-drawer').classList.toggle('open'); }
+
+// ---- consent ----
+function wireConsent() {
+  const radios = document.querySelectorAll('input[name="consent"]');
+  const warn = document.getElementById('consent-warning');
+  radios.forEach(r => r.addEventListener('change', () => {
+    if (r.checked && (r.value === 'no' || r.value === 'conditional')) warn.style.display = 'flex';
+    else if (r.checked && r.value === 'yes') warn.style.display = 'none';
+  }));
+}
+
+// ---- threat pause ----
+function pauseForThreat() {
+  const reason = prompt('Describe the disclosure and the point in the interview where you paused (this timestamps and attaches to the record):');
+  if (!reason) return;
+  threatPaused = { at: new Date().toISOString(), reason };
+  const bar = document.getElementById('threat-bar');
+  bar.style.background = '#000';
+  clear(bar);
+  const span = h('span');
+  span.appendChild(icon('report', 18));
+  span.appendChild(document.createTextNode(' INTERVIEW PAUSED · Threat routing at ' + new Date(threatPaused.at).toLocaleString() + ' · Reason: ' + threatPaused.reason));
+  bar.appendChild(span);
+}
+
+// ---- metadata helpers ----
+function getMeta() {
+  const fields = ['m-student','m-grade','m-disability','m-interviewer','m-role','m-relationship','m-incident-date','m-interview-date','m-interview-time','m-modality'];
+  const out = {};
+  fields.forEach(f => { const n = document.getElementById(f); out[f] = n ? (n.value || '') : ''; });
+  const nd = document.getElementById('m-not-discipliner');
+  out.notDiscipliner = !!(nd && nd.checked);
+  const c = document.querySelector('input[name="consent"]:checked');
+  out.consent = c ? c.value : '';
+  const cc = document.getElementById('consent-condition');
+  out.consentCondition = cc ? (cc.value || '') : '';
+  return out;
+}
+
+// ---- save / load ----
+function saveDraft() {
+  const payload = { meta: getMeta(), band: currentBand, answers, notes, threat: threatPaused, savedAt: new Date().toISOString() };
+  try {
+    localStorage.setItem('svp-draft', JSON.stringify(payload));
+    const stamp = 'Draft saved ' + new Date().toLocaleTimeString();
+    document.getElementById('draft-stamp').textContent = stamp;
+    document.getElementById('footer-stamp').textContent = stamp;
+  } catch (e) { alert('Could not save locally: ' + e.message); }
+}
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem('svp-draft');
+    if (!raw) return;
+    const p = JSON.parse(raw);
+    if (p.band && ['hs','ms','ue'].includes(p.band)) setBand(p.band);
+    if (p.answers) Object.entries(p.answers).forEach(([k, v]) => {
+      const ta = document.getElementById('ans-' + k);
+      if (ta) { ta.value = v; answers[k] = v; }
+    });
+    if (p.notes) Object.entries(p.notes).forEach(([k, v]) => {
+      const ta = document.getElementById(k); if (ta) { ta.value = v; notes[k] = v; }
+    });
+    if (p.meta) Object.entries(p.meta).forEach(([k, v]) => {
+      if (k === 'notDiscipliner') { const n = document.getElementById('m-not-discipliner'); if (n) n.checked = !!v; }
+      else if (k === 'consent' && v) { const r = document.querySelector('input[name="consent"][value="' + v + '"]'); if (r) { r.checked = true; r.dispatchEvent(new Event('change')); } }
+      else if (k === 'consentCondition') { const n = document.getElementById('consent-condition'); if (n) n.value = v; }
+      else { const n = document.getElementById(k); if (n) n.value = v; }
+    });
+    if (p.savedAt) document.getElementById('draft-stamp').textContent = 'Draft loaded · ' + new Date(p.savedAt).toLocaleTimeString();
+  } catch (e) { console.warn('draft load failed', e); }
+}
+
+// ---- report ----
+function findQuestion(fid) { for (const d of DOMAINS) for (const q of d.questions) if (q.id === fid) return q; return null; }
+function generateReport() {
+  const m = getMeta();
+  if (m['m-student']) document.getElementById('sidebar-case').textContent = m['m-student'].toUpperCase();
+  const rpt = document.getElementById('print-report');
+  clear(rpt);
+
+  // Not-a-determination banner
+  rpt.appendChild(makeWarningCard(
+    'This Is Not a Manifestation Determination',
+    'This report organizes raw student evidence for MDR-team deliberation. The two-prong test under 34 CFR §300.530(e) belongs to the team of qualified professionals, not to this instrument. Absence of remorse, flat affect, cool pose, and fragmentary recall are NOT evidence against manifestation.'
+  ));
+  const sp = h('div', { style: 'height:1rem;' }); rpt.appendChild(sp);
+
+  rpt.appendChild(h('h1', { class: 'font-headline font-bold mb-1', style: 'font-size:2.75rem;letter-spacing:-.02em;' }, 'Student Voice Protocol Report'));
+  rpt.appendChild(h('p', { class: 'text-[.75rem] uppercase tracking-widest mb-8 text-tertiary' }, 'GUARD Appendix D v4.0 · Evidence Collection for MDR Review'));
+
+  // metadata table
+  const metaTable = h('table', { style: 'width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:1.5rem;' });
+  const rows = [
+    [['Student', m['m-student']], ['Grade/Age', m['m-grade']], ['Disability category', m['m-disability']]],
+    [['Interviewer', m['m-interviewer']], ['Role', m['m-role']], ['Trusted-adult relationship', m['m-relationship']]],
+    [['Incident date', m['m-incident-date']], ['Interview date/time', m['m-interview-date'] + ' ' + m['m-interview-time']], ['Modality', m['m-modality']]],
+    [['Age band used', currentBand.toUpperCase()], ['Interviewer NOT disciplining admin', m.notDiscipliner ? 'Yes' : 'NOT confirmed'], ['Consent', (m.consent || '—') + (m.consentCondition ? ' (' + m.consentCondition + ')' : '')]],
+  ];
+  rows.forEach(r => {
+    const tr = h('tr');
+    r.forEach(([k, v]) => {
+      const td = h('td', { style: 'border:1px solid #000;padding:.4rem .6rem;' });
+      td.appendChild(h('strong', null, k + ': '));
+      td.appendChild(document.createTextNode(v || ''));
+      tr.appendChild(td);
+    });
+    metaTable.appendChild(tr);
+  });
+  rpt.appendChild(metaTable);
+
+  if (threatPaused) {
+    rpt.appendChild(makeWarningCard(
+      'Interview Paused for Threat Assessment Routing',
+      'Paused at ' + new Date(threatPaused.at).toLocaleString() + '. Reason: ' + threatPaused.reason + '. Student Voice Protocol does not conduct threat assessment — the two processes remain structurally separate.'
+    ));
+    rpt.appendChild(h('div', { style: 'height:1rem;' }));
+  }
+
+  // coverage
+  let filled = 0, gapList = [];
+  DOMAINS.forEach(d => d.questions.forEach(q => {
+    if (answers[q.id] && answers[q.id].trim()) filled++;
+    else gapList.push(q.id);
+  }));
+  const coverageMsg = filled + ' of ' + (filled + gapList.length) + ' fields captured. ' +
+    (gapList.length > 0 ? 'Uncaptured: ' + gapList.join(', ') + '. The MDR team should note these gaps during review.' : 'All fields captured.');
+  rpt.appendChild(makeInfoBanner('Coverage', coverageMsg));
+  rpt.appendChild(h('div', { style: 'height:1rem;' }));
+
+  // domains
+  DOMAINS.forEach(d => {
+    const sec = h('section', { style: 'margin-bottom:1.25rem;' });
+    const h2 = h('h2', { class: 'font-headline font-bold mb-2', style: 'font-size:1.5rem;' }, 'Domain ' + d.num + ' — ' + d.title + ' ');
+    const tag = h('span', { style: "font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#78100b;margin-left:.5rem;" }, d.mandatory ? 'Mandatory' : 'Conditional');
+    h2.appendChild(tag);
+    sec.appendChild(h2);
+    d.questions.forEach(q => {
+      const qd = h('div', { style: 'margin-bottom:.75rem;page-break-inside:avoid;' });
+      qd.appendChild(h('div', { style: "font-family:'Public Sans',sans-serif;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:#78100b;font-weight:700;" }, q.id + ' · ' + q.label + ' · ' + q.qtype));
+      qd.appendChild(h('div', { style: "font-family:'Newsreader',serif;font-style:italic;font-size:.95rem;margin:.15rem 0 .25rem;" }, q.prompts[currentBand]));
+      const ansBox = h('div', { style: 'border-left:3px solid #000;padding:.25rem .65rem;font-size:.85rem;' });
+      if (answers[q.id] && answers[q.id].trim()) {
+        answers[q.id].split('\n').forEach((line, i) => {
+          if (i > 0) ansBox.appendChild(h('br'));
+          ansBox.appendChild(document.createTextNode(line));
+        });
+      } else {
+        ansBox.appendChild(h('em', { style: 'color:#777;' }, '— not captured —'));
+      }
+      qd.appendChild(ansBox);
+      qd.appendChild(h('div', { style: 'font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:#474747;margin-top:.15rem;' }, 'Routes to → ' + q.routing));
+      sec.appendChild(qd);
+    });
+    rpt.appendChild(sec);
+  });
+
+  // 5 Ps routing
+  const five = h('section', { style: 'page-break-before:always;margin-bottom:1.25rem;' });
+  five.appendChild(h('h2', { class: 'font-headline font-bold mb-1', style: 'font-size:1.75rem;' }, '5 Ps Evidence Routing'));
+  five.appendChild(h('p', { class: 'text-[.75rem] italic text-ink-soft mb-4' }, 'Raw evidence organized for team deliberation. This is not a manifestation determination.'));
+  Object.entries(FIVE_PS).forEach(([ps, fields]) => {
+    const block = h('div', { style: 'margin-bottom:.75rem;' });
+    block.appendChild(h('h3', { class: 'font-bold uppercase text-[.7rem] mb-2 text-tertiary', style: 'letter-spacing:.15em;' }, ps));
+    const ul = h('ul', { style: 'list-style:disc;padding-left:1.5rem;font-size:.82rem;' });
+    fields.forEach(fid => {
+      const q = findQuestion(fid); if (!q) return;
+      const li = h('li', { style: 'margin-bottom:.35rem;' });
+      li.appendChild(h('strong', null, fid + ' '));
+      li.appendChild(document.createTextNode('· ' + q.label + ' — '));
+      if (answers[fid] && answers[fid].trim()) li.appendChild(document.createTextNode(answers[fid]));
+      else li.appendChild(h('em', { style: 'color:#777;' }, 'not captured'));
+      ul.appendChild(li);
+    });
+    block.appendChild(ul);
+    five.appendChild(block);
+  });
+  rpt.appendChild(five);
+
+  // findings
+  const f1 = document.getElementById('finding-1').value;
+  const f2 = document.getElementById('finding-2').value;
+  const f3 = document.getElementById('finding-3').value;
+  const rel = document.getElementById('reliability').value;
+  const relReason = document.getElementById('reliability-reason').value;
+  const fnd = h('section', { style: 'margin-bottom:1.25rem;' });
+  fnd.appendChild(h('h2', { class: 'font-headline font-bold mb-2', style: 'font-size:1.5rem;' }, 'Key Findings for MDR Team'));
+  const ol = h('ol', { style: 'list-style:decimal;padding-left:1.5rem;font-size:.9rem;' });
+  [f1, f2, f3].forEach(ftx => {
+    const li = h('li', { style: 'margin-bottom:.4rem;' });
+    if (ftx) li.appendChild(document.createTextNode(ftx));
+    else li.appendChild(h('em', null, '—'));
+    ol.appendChild(li);
+  });
+  fnd.appendChild(ol);
+  const relP = h('p', { class: 'mt-4 text-[.85rem]' });
+  relP.appendChild(h('strong', null, 'Interviewer-rated reliability: '));
+  relP.appendChild(document.createTextNode(rel || '—'));
+  fnd.appendChild(relP);
+  const rrP = h('p', { class: 'text-[.85rem]' });
+  rrP.appendChild(h('strong', null, 'Reasoning: '));
+  rrP.appendChild(document.createTextNode(relReason || '—'));
+  fnd.appendChild(rrP);
+  rpt.appendChild(fnd);
+
+  // legal cite footer
+  const cite = h('div', { class: 'legal-cite' }, 'Report generated from GUARD Appendix D v4.0. Evidence captured is "relevant information" under 34 CFR §300.530(e) and must be reviewed by the MDR team with the parent/guardian. Person-first language preserved throughout. Data retention and FERPA handling per district policy.');
+  rpt.appendChild(cite);
+
+  window.print();
+}
+
+// ---- init ----
+document.addEventListener('DOMContentLoaded', () => {
+  renderTextareaList(document.getElementById('bias-questions'), BIAS_QUESTIONS);
+  renderTextareaList(document.getElementById('cultural-questions'), CULTURAL_QUESTIONS);
+  renderEnvChecklist();
+  renderGroundRules();
+  renderVocabTables();
+  renderDomains();
+  renderClosure();
+  renderObservationLog();
+  renderSafetyRubric();
+  renderReluctance();
+  wireConsent();
+
+  document.querySelectorAll('#age-band-buttons .age-pill').forEach(b => {
+    b.addEventListener('click', () => setBand(b.dataset.band));
+  });
+
+  document.querySelectorAll('[data-speak-target]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.querySelector(btn.getAttribute('data-speak-target'));
+      if (target) speak(target.innerText);
+    });
+  });
+
+  loadDraft();
+});
+
+window.saveDraft = saveDraft;
+window.generateReport = generateReport;
+window.toggleDrawer = toggleDrawer;
+window.pauseForThreat = pauseForThreat;
+</script>
+</body>
+</html>
