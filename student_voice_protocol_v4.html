@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>GUARD Protocol Appendix D — Student Voice Protocol v4.0</title>
+<title>Manifesto Student Voice Protocol — Appendix D · v4.1</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
@@ -140,7 +140,7 @@ tailwind.config = {
 <!-- =========== FIXED HEADER =========== -->
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-surface border-b-2 border-black">
   <div class="flex items-center gap-6">
-    <span class="font-headline text-xl font-bold italic tracking-tight">GUARD Protocol Engine</span>
+    <span class="font-headline text-xl font-bold italic tracking-tight">Manifesto Engine</span>
     <nav class="hidden md:flex gap-1 items-center">
       <a class="text-[.65rem] font-bold uppercase tracking-wider px-3 py-1 border border-transparent hover:border-black hover:bg-black hover:text-white transition-all" href="#">Case Files</a>
       <a class="text-[.65rem] font-bold uppercase tracking-wider px-3 py-1 border border-transparent hover:border-black hover:bg-black hover:text-white transition-all" href="#">Legal Database</a>
@@ -445,7 +445,7 @@ tailwind.config = {
 <footer class="ml-60 border-t-2 border-black px-10 py-8 bg-black text-white no-print">
   <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between gap-6">
     <div>
-      <span class="font-headline text-lg font-bold italic">GUARD Protocol Engine</span>
+      <span class="font-headline text-lg font-bold italic">Manifesto Engine</span>
       <p class="text-[.7rem] text-stone-400 mt-2 max-w-sm">Every determination is a legal and moral obligation. The tool guides; the IEP team decides.</p>
     </div>
     <div class="flex gap-10 text-[.7rem]">
@@ -1383,7 +1383,7 @@ function generateReport() {
   const sp = h('div', { style: 'height:1rem;' }); rpt.appendChild(sp);
 
   rpt.appendChild(h('h1', { class: 'font-headline font-bold mb-1', style: 'font-size:2.75rem;letter-spacing:-.02em;' }, 'Student Voice Protocol Report'));
-  rpt.appendChild(h('p', { class: 'text-[.75rem] uppercase tracking-widest mb-8 text-tertiary' }, 'GUARD Appendix D v4.0 · Evidence Collection for MDR Review'));
+  rpt.appendChild(h('p', { class: 'text-[.75rem] uppercase tracking-widest mb-8 text-tertiary' }, 'Manifesto Student Voice Protocol — Appendix D v4.1 · Evidence Collection for MDR Review'));
 
   // metadata table
   const metaTable = h('table', { style: 'width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:1.5rem;' });
@@ -1500,7 +1500,7 @@ function generateReport() {
   rpt.appendChild(fnd);
 
   // legal cite footer
-  const cite = h('div', { class: 'legal-cite' }, 'Report generated from GUARD Appendix D v4.0. Evidence captured is "relevant information" under 34 CFR §300.530(e) and must be reviewed by the MDR team with the parent/guardian. Person-first language preserved throughout. Data retention and FERPA handling per district policy.');
+  const cite = h('div', { class: 'legal-cite' }, 'Report generated from Manifesto Student Voice Protocol — Appendix D v4.1. Evidence captured is "relevant information" under 34 CFR §300.530(e) and must be reviewed by the MDR team with the parent/guardian. Person-first language preserved throughout. Data retention and FERPA handling per district policy.');
   rpt.appendChild(cite);
 
   window.print();
