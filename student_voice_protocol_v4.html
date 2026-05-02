@@ -230,6 +230,27 @@ tailwind.config = {
         <strong>Legal basis:</strong> IDEA requires the MDR team to review "all relevant information in the student's file" (34 CFR §300.530(e)). The 2006 Federal Register commentary (71 Fed. Reg. 46,720) emphasizes that no source of relevant information may be excluded. The student's first-person account is relevant information — knowing a rule does not equate to the ability to execute that rule under stress.
       </div>
 
+      <!-- PURPOSE SELECTOR — gates everything below until selection -->
+      <section id="purpose-selector-section" class="equity-gate mb-10">
+        <h2 class="font-headline text-3xl font-bold mb-2 mt-2">Interview Purpose</h2>
+        <p class="text-sm mb-5 italic">Choose the reason for this interview. Two paths are active in this build (Manifestation Determination preparation and Universal post-incident interview). The other eight are visibly stubbed and route to a research-stage landing page until their content is authored.</p>
+        <div id="purpose-cards" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </section>
+
+      <!-- COMING SOON — populated when a stubbed purpose is selected -->
+      <section id="coming-soon-section" class="equity-gate mb-10" hidden></section>
+
+      <!-- THREAT ASSESSMENT PASSTHROUGH — shown when the threat_pause purpose is selected -->
+      <section id="threat-passthrough-section" class="equity-gate mb-10" hidden>
+        <h2 class="font-headline text-3xl font-bold mb-2 mt-2">Threat Assessment Routing</h2>
+        <p class="text-sm mb-3">Use the red <strong>Pause &amp; Route</strong> bar at the top of the page to time-stamp the disclosure and hand off to your district's threat assessment team. The Student Voice Protocol does not conduct threat assessment — these processes remain structurally separate.</p>
+        <p class="text-sm italic mb-5 text-ink-soft">If you reached this view by mistake, return to purpose selection.</p>
+        <button class="btn-secondary" onclick="resetPurposeSelection()">Back to purpose selection</button>
+      </section>
+
+      <!-- GATED INTERVIEW CONTENT — visible only when an active purpose (mdr / universal) is selected -->
+      <div id="gated-interview-content" hidden>
+
       <!-- AGE BAND SELECTOR -->
       <section class="mb-10 border-2 border-black bg-white p-6">
         <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
@@ -434,6 +455,8 @@ tailwind.config = {
           <button class="btn-primary" onclick="generateReport()">Generate Report &amp; Print</button>
         </div>
       </div>
+
+      </div><!-- /#gated-interview-content -->
     </div>
 
     <!-- PRINT-ONLY REPORT -->
@@ -1725,6 +1748,126 @@ function generateReport() {
   window.print();
 }
 
+// ---- BP1: Purpose Selector + Coming Soon + gate visibility ----
+function renderPurposeSelector() {
+  const root = document.getElementById('purpose-cards');
+  if (!root) return;
+  clear(root);
+  INTERVIEW_PURPOSES.forEach(p => {
+    const card = h('button', {
+      type: 'button',
+      class: 'purpose-card text-left p-4 border border-black bg-white hover:bg-surface-container transition-colors',
+      'data-purpose-id': p.id,
+    });
+    const head = h('div', { class: 'flex items-center gap-2 mb-1' });
+    let dotClass = 'bg-green-600';
+    let dotLabel = 'Active';
+    if (p.status === 'stubbed') { dotClass = 'bg-amber-500'; dotLabel = 'In development'; }
+    else if (p.status === 'passthrough') { dotClass = 'bg-blue-700'; dotLabel = 'Passthrough'; }
+    head.appendChild(h('span', { class: 'inline-block w-2.5 h-2.5 ' + dotClass, 'aria-hidden': 'true' }));
+    head.appendChild(h('span', { class: 'text-[.6rem] font-bold uppercase tracking-widest text-ink-soft' }, dotLabel));
+    card.appendChild(head);
+    card.appendChild(h('div', { class: 'font-headline text-lg font-bold leading-tight mb-1' }, p.label));
+    card.appendChild(h('div', { class: 'text-[.85rem] leading-snug text-ink-soft' }, p.description));
+    card.addEventListener('click', () => selectPurpose(p.id));
+    root.appendChild(card);
+  });
+}
+
+function renderComingSoon(purpose) {
+  const root = document.getElementById('coming-soon-section');
+  if (!root) return;
+  clear(root);
+  root.appendChild(h('h2', { class: 'font-headline text-3xl font-bold mb-2 mt-2' }, purpose.label));
+  root.appendChild(h('p', { class: 'text-sm mb-4' }, 'In development — currently in research phase.'));
+
+  const ra = purpose.researchAreas || [];
+  if (ra.length > 0) {
+    root.appendChild(h('p', { class: 'text-[.7rem] uppercase tracking-widest font-bold mb-2 text-ink-soft' }, 'Research areas'));
+    const ul = h('ul', { class: 'list-disc pl-5 text-sm space-y-1 mb-5' });
+    ra.forEach(area => ul.appendChild(h('li', null, area)));
+    root.appendChild(ul);
+  } else {
+    root.appendChild(h('p', { class: 'text-sm italic text-ink-soft mb-5' }, 'Research areas for this path will be listed here in a later build.'));
+  }
+
+  const back = h('button', { class: 'btn-secondary', type: 'button' }, 'Back to purpose selection');
+  back.addEventListener('click', resetPurposeSelection);
+  root.appendChild(back);
+}
+
+function selectPurpose(purposeId) {
+  const purpose = INTERVIEW_PURPOSES.find(p => p.id === purposeId);
+  if (!purpose) return;
+  state.interview.purpose = purpose.id;
+  if (!state.interview.started_at_utc) state.interview.started_at_utc = new Date().toISOString();
+
+  if (purpose.status === 'stubbed') {
+    renderComingSoon(purpose);
+  }
+  applyGateVisibility();
+
+  const focusId = (purpose.status === 'active') ? 'gated-interview-content' :
+                  (purpose.status === 'stubbed') ? 'coming-soon-section' :
+                  'threat-passthrough-section';
+  const node = document.getElementById(focusId);
+  if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetPurposeSelection() {
+  state.interview.purpose = null;
+  applyGateVisibility();
+  const sel = document.getElementById('purpose-selector-section');
+  if (sel) sel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function applyGateVisibility() {
+  const purposeId = state.interview.purpose;
+  const purposeObj = INTERVIEW_PURPOSES.find(p => p.id === purposeId);
+  const status = purposeObj ? purposeObj.status : null;
+
+  const selector = document.getElementById('purpose-selector-section');
+  const comingSoon = document.getElementById('coming-soon-section');
+  const threatPass = document.getElementById('threat-passthrough-section');
+  const gated = document.getElementById('gated-interview-content');
+
+  // Default: only Selector visible
+  if (selector) selector.hidden = false;
+  if (comingSoon) comingSoon.hidden = true;
+  if (threatPass) threatPass.hidden = true;
+  if (gated) gated.hidden = true;
+
+  if (status === 'active') {
+    if (selector) selector.hidden = true;
+    if (gated) gated.hidden = false;
+  } else if (status === 'stubbed') {
+    if (selector) selector.hidden = true;
+    if (comingSoon) comingSoon.hidden = false;
+  } else if (status === 'passthrough') {
+    if (selector) selector.hidden = true;
+    if (threatPass) threatPass.hidden = false;
+  }
+}
+
+// Mirror existing v4 metadata inputs into state.profile (do not duplicate UI).
+// Only fields already present in v4 are mirrored here; new fields land in BP1 commit 4.
+function wireProfileMirror() {
+  const pairs = [
+    ['m-student', 'name'],
+    ['m-grade', 'grade'],
+  ];
+  pairs.forEach(([elId, key]) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const sync = () => {
+      state.profile[key] = el.value || '';
+      if (key === 'grade') state.profile.ageBand = gradeToAgeBand(el.value);
+    };
+    el.addEventListener('input', sync);
+    sync();
+  });
+}
+
 // ---- init ----
 document.addEventListener('DOMContentLoaded', () => {
   renderTextareaList(document.getElementById('bias-questions'), BIAS_QUESTIONS);
@@ -1738,6 +1881,9 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSafetyRubric();
   renderReluctance();
   wireConsent();
+  renderPurposeSelector();
+  wireProfileMirror();
+  applyGateVisibility();
 
   document.querySelectorAll('#age-band-buttons .age-pill').forEach(b => {
     b.addEventListener('click', () => setBand(b.dataset.band));
@@ -1757,6 +1903,8 @@ window.saveDraft = saveDraft;
 window.generateReport = generateReport;
 window.toggleDrawer = toggleDrawer;
 window.pauseForThreat = pauseForThreat;
+window.selectPurpose = selectPurpose;
+window.resetPurposeSelection = resetPurposeSelection;
 </script>
 </body>
 </html>
