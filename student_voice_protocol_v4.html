@@ -909,6 +909,225 @@ const answers = {};
 const notes = {};
 let threatPaused = null;
 
+// =========================================================================
+// BP1 — Intake data + conditional-logic engine
+// =========================================================================
+
+const INTERVIEW_PURPOSES = [
+  { id: 'mdr',                label: 'Manifestation Determination preparation', description: 'For students with IEPs facing disciplinary removal that triggers MDR procedures.',          status: 'active',      route: 'fullInterview' },
+  { id: 'universal',          label: 'Universal post-incident interview',       description: 'For any student after a behavioral incident, regardless of IEP/504 status.',                  status: 'active',      route: 'fullInterview' },
+  { id: '504',                label: 'Section 504 incident review',             description: 'For students with 504 plans after a behavioral incident.',                                    status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 'fba',                label: 'FBA / BIP development input',             description: 'Behavior specialist or school psych collecting student voice for FBA/BIP development.',        status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 'restorative',        label: 'Restorative practice preparation',        description: 'Restorative coordinator prepping for a circle or conference.',                                 status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 're_entry',           label: 'Re-entry interview',                      description: "Counselor or admin preparing a student’s return after suspension or removal.",            status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 'bullying',           label: 'Bullying / peer conflict investigation',  description: 'Title IX or investigator interviewing a student involved in a bullying or conflict report.',   status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 'tier2',              label: 'Tier 2 check-in',                         description: 'Mentor or case manager conducting a structured Tier 2 student check-in.',                      status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 'student_requested',  label: 'Student-requested debrief',               description: 'Student asked to talk; counselor conducting a debrief with no downstream routing.',            status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 'threat_pause',       label: 'Threat assessment routing',               description: 'Pass-through to the existing threat-pause and routing-handoff bar.',                            status: 'passthrough', route: 'existingThreatPauseBar' },
+];
+
+const SETTINGS = [
+  { id: 'classroom',     label: 'Classroom (instructional time)',      status: 'active',  fallbackTo: null },
+  { id: 'hallway',       label: 'Hallway / passing period',            status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'cafeteria',     label: 'Cafeteria / lunch',                   status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'athletic',      label: 'Athletic field / gym',                status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'playground',    label: 'Playground / recess',                 status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'locker_room',   label: 'Locker room',                         status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'bathroom',      label: 'Bathroom',                            status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'bus',           label: 'Bus / transportation',                status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'parking_lot',   label: 'Parking lot',                         status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'assembly',      label: 'Assembly / field trip',               status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'off_campus',    label: 'Off-campus school event',             status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'unstructured',  label: 'Unstructured transition (catch-all)', status: 'stubbed', fallbackTo: 'classroom' },
+];
+
+// 13 IDEA categories (used for disability multi-select)
+const IDEA_CATEGORIES = [
+  { code: 'SLD', label: 'Specific Learning Disability' },
+  { code: 'OHI', label: 'Other Health Impairment' },
+  { code: 'ASD', label: 'Autism Spectrum Disorder' },
+  { code: 'ED',  label: 'Emotional Disturbance' },
+  { code: 'ID',  label: 'Intellectual Disability' },
+  { code: 'SLI', label: 'Speech or Language Impairment' },
+  { code: 'TBI', label: 'Traumatic Brain Injury' },
+  { code: 'MD',  label: 'Multiple Disabilities' },
+  { code: 'OI',  label: 'Orthopedic Impairment' },
+  { code: 'VI',  label: 'Visual Impairment' },
+  { code: 'HI',  label: 'Hearing Impairment' },
+  { code: 'DB',  label: 'Deaf-Blindness' },
+  { code: 'DD',  label: 'Developmental Delay' },
+  { code: 'OTHER', label: 'Other or unspecified' },
+];
+
+const CONDITION_RULES = {
+  'domain.D-PEER.visible': {
+    description: 'Peer dynamics mini-domain surfaces when peers were present at incident.',
+    require: { 'incident.whoPresent': { includesAny: ['Peers only', 'Both adults and peers'] } },
+  },
+  'domain.D-BLG.visible': {
+    description: 'Belonging domain surfaces when behavior involved social dynamics, evidence of not belonging, or identity-based discrimination/microaggressions (per v4 conditional). Wired in a later prompt — placeholder for now.',
+    require: { _alwaysFalseForNow: true },
+  },
+  'domain.D-RNT.visible': {
+    description: 'Repair & Re-Entry domain surfaces when student has been or will be removed, or when behavior caused documented harm (per v4 conditional). Wired in a later prompt — placeholder for now.',
+    require: { _alwaysFalseForNow: true },
+  },
+  'field.D-CTX-04.visible': {
+    description: 'IEP Service Delivery Context only asked when student has an IEP.',
+    require: { 'profile.iepStatus': { equals: 'yes' } },
+  },
+  'purpose.fullInterview.allowed': {
+    description: 'Full interview only allowed for active purposes.',
+    require: { 'interview.purpose': { in: ['mdr', 'universal'] } },
+  },
+};
+
+// ---- engine helpers ----
+function uuid() {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+  // RFC4122 v4 fallback
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+function getStatePath(s, path) {
+  return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), s);
+}
+function checkPredicate(s, path, predicate) {
+  const val = getStatePath(s, path);
+  if (predicate.equals !== undefined) return val === predicate.equals;
+  if (predicate.notEquals !== undefined) return val !== predicate.notEquals;
+  if (predicate.in !== undefined) return Array.isArray(predicate.in) && predicate.in.includes(val);
+  if (predicate.includesAny !== undefined) {
+    if (!Array.isArray(val)) return false;
+    return predicate.includesAny.some(x => val.includes(x));
+  }
+  if (predicate.truthy === true) return !!val;
+  if (predicate.falsy === true) return !val;
+  return true;
+}
+function checkRequire(s, req) {
+  if (!req) return true;
+  if (req._alwaysFalseForNow === true) return false;
+  for (const [path, predicate] of Object.entries(req)) {
+    if (path === '_alwaysFalseForNow') continue;
+    if (!checkPredicate(s, path, predicate)) return false;
+  }
+  return true;
+}
+// Public API: pass a state and a single rule config object
+function evaluateConditions(s, conditionConfig) {
+  if (!conditionConfig) return true;
+  return checkRequire(s, conditionConfig.require);
+}
+// Convenience: look up a rule by key against the live state
+function isFlagOn(ruleKey) {
+  return evaluateConditions(state, CONDITION_RULES[ruleKey]);
+}
+
+// ---- state ----
+function initState() {
+  return {
+    schema_version: '0.9.0-beta',
+    framework: 'Manifesto',
+    tool: 'Student Voice Protocol — Appendix D',
+    interview_id: uuid(),
+    interviewer: {
+      role: null,
+      is_disciplining_admin: null,
+      preflight_completed: false,
+      bias_reflection_completed: false,
+      cultural_preparation_completed: false,
+    },
+    interview: {
+      purpose: null,
+      started_at_utc: null,
+      completed_at_utc: null,
+    },
+    profile: {
+      name: '',
+      grade: '',
+      dob: '',
+      ageBand: 'hs',
+      iepStatus: '',
+      section504Status: '',
+      ellStatus: '',
+      primaryLanguage: '',
+      aacUser: false,
+      aslUser: false,
+      disabilityCategories: [],
+    },
+    incident: {
+      date: '',
+      timeOfDay: '',
+      setting: '',
+      whoPresent: [],
+      behaviorNature: '',
+    },
+    responses: {},
+    observations: {
+      regulation_checks: [],
+      pauses_taken: 0,
+    },
+  };
+}
+const state = initState();
+
+// ---- field registry derived from DOMAINS (single source of truth) ----
+const FIELD_REGISTRY = (() => {
+  const reg = {};
+  for (const d of DOMAINS) {
+    for (const q of d.questions) {
+      reg[q.id] = { domain: d.id, label: q.label, qtype: q.qtype };
+    }
+  }
+  // Reserve D-PEER mini-domain IDs (question content authored in BP4)
+  reg['D-PEER-01'] = { domain: 'D-PEER', label: 'Peer Coercion / Pressure',   qtype: 'Inv.', reserved: true };
+  reg['D-PEER-02'] = { domain: 'D-PEER', label: 'Peer Ridicule / Humiliation', qtype: 'Inv.', reserved: true };
+  reg['D-PEER-03'] = { domain: 'D-PEER', label: 'Bystander Dynamics',          qtype: 'Dir.', reserved: true };
+  return reg;
+})();
+
+// ---- helpers used downstream by intake + state.responses provenance wrapper ----
+function gradeToAgeBand(grade) {
+  if (!grade) return 'hs';
+  const g = String(grade).toUpperCase();
+  if (g === 'K' || g === '1' || g === '2' || g === '3' || g === '4') return 'ue';
+  const n = parseInt(g, 10);
+  if (!isNaN(n)) {
+    if (n <= 4) return 'ue';
+    if (n <= 8) return 'ms';
+    return 'hs';
+  }
+  return 'hs';
+}
+
+// Wrap an answer value into the provenance shape and write into state.responses.
+// Existing answers/notes capture path remains intact; this writes alongside.
+function captureResponse(fieldId, value) {
+  state.responses[fieldId] = {
+    value: value,
+    provenance: {
+      age_band: state.profile.ageBand || currentBand,
+      tier_used: null,
+      scaffold_viewed: false,
+      rephrase_count: 0,
+      probe_count: 0,
+      response_source: 'student_voice',
+      language: 'en-US',
+      duration_seconds: null,
+      regulation_observation: null,
+      prompt_version: 'v1.0.0',
+      purpose: state.interview.purpose,
+      setting: state.incident.setting,
+      timestamp_utc: new Date().toISOString(),
+    },
+    reliability_flags: [],
+  };
+}
+
 // ---- tiny DOM helper (no innerHTML anywhere) ----
 function h(tag, props) {
   const e = document.createElement(tag);
