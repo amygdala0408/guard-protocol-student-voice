@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>GUARD Protocol Appendix D — Student Voice Protocol v4.0</title>
+<title>Manifesto Student Voice Protocol — Appendix D · v4.1</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
@@ -140,7 +140,7 @@ tailwind.config = {
 <!-- =========== FIXED HEADER =========== -->
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-surface border-b-2 border-black">
   <div class="flex items-center gap-6">
-    <span class="font-headline text-xl font-bold italic tracking-tight">GUARD Protocol Engine</span>
+    <span class="font-headline text-xl font-bold italic tracking-tight">Manifesto Engine</span>
     <nav class="hidden md:flex gap-1 items-center">
       <a class="text-[.65rem] font-bold uppercase tracking-wider px-3 py-1 border border-transparent hover:border-black hover:bg-black hover:text-white transition-all" href="#">Case Files</a>
       <a class="text-[.65rem] font-bold uppercase tracking-wider px-3 py-1 border border-transparent hover:border-black hover:bg-black hover:text-white transition-all" href="#">Legal Database</a>
@@ -230,6 +230,27 @@ tailwind.config = {
         <strong>Legal basis:</strong> IDEA requires the MDR team to review "all relevant information in the student's file" (34 CFR §300.530(e)). The 2006 Federal Register commentary (71 Fed. Reg. 46,720) emphasizes that no source of relevant information may be excluded. The student's first-person account is relevant information — knowing a rule does not equate to the ability to execute that rule under stress.
       </div>
 
+      <!-- PURPOSE SELECTOR — gates everything below until selection -->
+      <section id="purpose-selector-section" class="equity-gate mb-10">
+        <h2 class="font-headline text-3xl font-bold mb-2 mt-2">Interview Purpose</h2>
+        <p class="text-sm mb-5 italic">Choose the reason for this interview. Two paths are active in this build (Manifestation Determination preparation and Universal post-incident interview). The other eight are visibly stubbed and route to a research-stage landing page until their content is authored.</p>
+        <div id="purpose-cards" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </section>
+
+      <!-- COMING SOON — populated when a stubbed purpose is selected -->
+      <section id="coming-soon-section" class="equity-gate mb-10" hidden></section>
+
+      <!-- THREAT ASSESSMENT PASSTHROUGH — shown when the threat_pause purpose is selected -->
+      <section id="threat-passthrough-section" class="equity-gate mb-10" hidden>
+        <h2 class="font-headline text-3xl font-bold mb-2 mt-2">Threat Assessment Routing</h2>
+        <p class="text-sm mb-3">Use the red <strong>Pause &amp; Route</strong> bar at the top of the page to time-stamp the disclosure and hand off to your district's threat assessment team. The Student Voice Protocol does not conduct threat assessment — these processes remain structurally separate.</p>
+        <p class="text-sm italic mb-5 text-ink-soft">If you reached this view by mistake, return to purpose selection.</p>
+        <button class="btn-secondary" onclick="resetPurposeSelection()">Back to purpose selection</button>
+      </section>
+
+      <!-- GATED INTERVIEW CONTENT — visible only when an active purpose (mdr / universal) is selected -->
+      <div id="gated-interview-content" hidden>
+
       <!-- AGE BAND SELECTOR -->
       <section class="mb-10 border-2 border-black bg-white p-6">
         <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
@@ -245,36 +266,183 @@ tailwind.config = {
         </div>
       </section>
 
-      <!-- SECTION: METADATA -->
+      <!-- SECTION: STUDENT PROFILE & SESSION METADATA -->
       <section class="mb-12 border-2 border-black bg-white divide-y-2 divide-black" id="metadata">
         <div class="p-6 bg-black text-white">
-          <h2 class="font-headline text-2xl font-bold uppercase tracking-tight">Interview Metadata</h2>
+          <h2 class="font-headline text-2xl font-bold uppercase tracking-tight">Student Profile &amp; Session Metadata</h2>
+          <p class="text-[.7rem] uppercase tracking-widest mt-1 opacity-80">Person-first language throughout · Disability is a category of identity, not a problem to overcome</p>
         </div>
+
+        <!-- STUDENT BLOCK -->
+        <div class="px-5 py-3 bg-surface-container-low">
+          <span class="text-[.65rem] font-bold uppercase tracking-widest text-tertiary">Student</span>
+        </div>
+
+        <!-- Row A: Name | Grade | DOB -->
         <div class="grid grid-cols-1 md:grid-cols-3 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
           <div class="p-5"><label>Student Name</label><input id="m-student" type="text" placeholder="Full name"/></div>
-          <div class="p-5"><label>Grade / Age</label><input id="m-grade" type="text" placeholder="e.g. Grade 7, age 12"/></div>
-          <div class="p-5"><label>Disability Category (if any)</label><input id="m-disability" type="text" placeholder="e.g. OHI, SLD, ASD"/></div>
+          <div class="p-5">
+            <label>Grade</label>
+            <select id="m-grade">
+              <option value="">— select —</option>
+              <option value="K">K</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+            </select>
+          </div>
+          <div class="p-5"><label>Date of Birth</label><input id="m-dob" type="date"/></div>
         </div>
+
+        <!-- Row B: Age Band display | IEP status | 504 status -->
+        <div class="grid grid-cols-1 md:grid-cols-3 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
+          <div class="p-5">
+            <label>Age / Developmental Band</label>
+            <div class="text-[.85rem] font-bold mt-1" id="m-age-band-display">High School (HS)</div>
+            <p class="text-[.7rem] italic text-ink-soft mt-1">Auto-derived from grade. Override at the top of the page if the student's developmental level differs from their chronological grade.</p>
+          </div>
+          <div class="p-5">
+            <label>IEP Status</label>
+            <div class="flex gap-2 flex-wrap mt-1">
+              <label class="flex items-center gap-2 border border-black px-3 py-1.5 cursor-pointer" style="display:inline-flex;"><input type="radio" name="iepStatus" value="yes"/>Yes</label>
+              <label class="flex items-center gap-2 border border-black px-3 py-1.5 cursor-pointer" style="display:inline-flex;"><input type="radio" name="iepStatus" value="no"/>No</label>
+              <label class="flex items-center gap-2 border border-black px-3 py-1.5 cursor-pointer" style="display:inline-flex;"><input type="radio" name="iepStatus" value="unsure"/>Unsure</label>
+            </div>
+          </div>
+          <div class="p-5">
+            <label>Section 504 Plan</label>
+            <div class="flex gap-2 flex-wrap mt-1">
+              <label class="flex items-center gap-2 border border-black px-3 py-1.5 cursor-pointer" style="display:inline-flex;"><input type="radio" name="section504Status" value="yes"/>Yes</label>
+              <label class="flex items-center gap-2 border border-black px-3 py-1.5 cursor-pointer" style="display:inline-flex;"><input type="radio" name="section504Status" value="no"/>No</label>
+              <label class="flex items-center gap-2 border border-black px-3 py-1.5 cursor-pointer" style="display:inline-flex;"><input type="radio" name="section504Status" value="unsure"/>Unsure</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row C: ELL status | Primary Language (conditional) | (3rd col reserved) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
+          <div class="p-5">
+            <label>English Language Learner Status</label>
+            <div class="flex gap-2 flex-wrap mt-1">
+              <label class="flex items-center gap-2 border border-black px-3 py-1.5 cursor-pointer" style="display:inline-flex;"><input type="radio" name="ellStatus" value="yes"/>Yes</label>
+              <label class="flex items-center gap-2 border border-black px-3 py-1.5 cursor-pointer" style="display:inline-flex;"><input type="radio" name="ellStatus" value="no"/>No</label>
+              <label class="flex items-center gap-2 border border-black px-3 py-1.5 cursor-pointer" style="display:inline-flex;"><input type="radio" name="ellStatus" value="exited"/>Exited</label>
+            </div>
+          </div>
+          <div class="p-5 md:col-span-2" id="m-language-cell" hidden>
+            <label>Primary Language at Home</label>
+            <input id="m-language" type="text" list="common-languages" placeholder="Type or select"/>
+            <datalist id="common-languages">
+              <option value="English"><option value="Spanish"><option value="Vietnamese"><option value="Mandarin Chinese"><option value="Cantonese"><option value="Tagalog"><option value="Korean"><option value="Russian"><option value="Arabic"><option value="Hmong"><option value="French"><option value="Haitian Creole"><option value="Portuguese"><option value="German"><option value="Hindi"><option value="Urdu"><option value="Punjabi"><option value="Somali"><option value="Amharic"><option value="Persian / Farsi"><option value="Swahili"><option value="American Sign Language">
+            </datalist>
+            <p class="text-[.7rem] italic text-ink-soft mt-1">Home language is a resource, not a deficit. Arrange a qualified neutral interpreter if needed.</p>
+          </div>
+        </div>
+
+        <!-- Row D: AAC | ASL -->
+        <div class="grid grid-cols-1 md:grid-cols-2 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
+          <div class="p-5">
+            <label class="flex items-start gap-3 cursor-pointer" style="display:flex;">
+              <input id="m-aac" type="checkbox" class="mt-1"/>
+              <span><span class="block font-bold text-[.85rem]">Student uses AAC (augmentative and alternative communication)</span><span class="block text-[.7rem] italic text-ink-soft mt-1">Use the student's AAC system throughout the interview. Rapport-building is not contingent on verbal speech.</span></span>
+            </label>
+          </div>
+          <div class="p-5">
+            <label class="flex items-start gap-3 cursor-pointer" style="display:flex;">
+              <input id="m-asl" type="checkbox" class="mt-1"/>
+              <span><span class="block font-bold text-[.85rem]">Student uses American Sign Language</span><span class="block text-[.7rem] italic text-ink-soft mt-1">Ensure a qualified ASL interpreter is present; the interpreter must be neutral and trained in mental health interpretation protocols.</span></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Row E: Disability Categories (conditional on IEP=Yes) -->
+        <div class="p-5" id="m-disability-cell" hidden>
+          <label>Documented Disability Categories <span class="text-[.65rem] font-normal italic text-ink-soft">(IDEA categories — select all that apply)</span></label>
+          <div id="m-disability-grid" class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2"></div>
+          <p class="text-[.7rem] italic text-ink-soft mt-2">Specific diagnoses are not collected by this tool. Categories only.</p>
+        </div>
+
+        <!-- SESSION BLOCK -->
+        <div class="px-5 py-3 bg-surface-container-low">
+          <span class="text-[.65rem] font-bold uppercase tracking-widest text-tertiary">Session</span>
+        </div>
+
+        <!-- Row F: Interviewer Name | Role | Relationship -->
         <div class="grid grid-cols-1 md:grid-cols-3 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
           <div class="p-5"><label>Interviewer Name</label><input id="m-interviewer" type="text" placeholder="Full name"/></div>
           <div class="p-5"><label>Interviewer Role</label><input id="m-role" type="text" placeholder="e.g. Social Worker"/></div>
           <div class="p-5"><label>Trusted-Adult Relationship to Student</label><input id="m-relationship" type="text" placeholder="e.g. Case Manager, Mentor"/></div>
         </div>
+
+        <!-- Row G: Interview Date | Time | Modality -->
         <div class="grid grid-cols-1 md:grid-cols-3 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
-          <div class="p-5"><label>Incident Date</label><input id="m-incident-date" type="date"/></div>
           <div class="p-5"><label>Interview Date</label><input id="m-interview-date" type="date"/></div>
           <div class="p-5"><label>Interview Time</label><input id="m-interview-time" type="time"/></div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
           <div class="p-5">
             <label>Interview Modality</label>
             <select id="m-modality"><option>In-person</option><option>Phone</option><option>Video</option><option>Written / AAC</option><option>Other</option></select>
           </div>
-          <div class="p-5 bg-surface-container-low">
-            <label class="flex items-start gap-3 cursor-pointer" style="display:flex;">
-              <input id="m-not-discipliner" type="checkbox" class="mt-1"/>
-              <span><span class="block font-bold text-[.8rem]">Interviewer is NOT the disciplining administrator and NOT identified by the student as unsafe.</span><span class="block text-[.65rem] text-error font-bold uppercase tracking-widest mt-1">Required for legal validity under §300.530(e).</span></span>
-            </label>
+        </div>
+
+        <!-- Row H: NOT-disciplining-admin (full width, structural gate) -->
+        <div class="p-5 bg-surface-container-low">
+          <label class="flex items-start gap-3 cursor-pointer" style="display:flex;">
+            <input id="m-not-discipliner" type="checkbox" class="mt-1"/>
+            <span><span class="block font-bold text-[.8rem]">Interviewer is NOT the disciplining administrator and NOT identified by the student as unsafe.</span><span class="block text-[.65rem] text-error font-bold uppercase tracking-widest mt-1">Required for legal validity under §300.530(e). The check is a hard gate at preflight.</span></span>
+          </label>
+        </div>
+      </section>
+
+      <!-- SECTION: INCIDENT INTAKE -->
+      <section class="mb-12 border-2 border-black bg-white divide-y-2 divide-black" id="incident-intake">
+        <div class="p-6 bg-black text-white">
+          <h2 class="font-headline text-2xl font-bold uppercase tracking-tight">Incident Intake</h2>
+          <p class="text-[.7rem] uppercase tracking-widest mt-1 opacity-80">Drives downstream conditional logic · Setting and peer presence determine which domains and questions surface</p>
+        </div>
+
+        <!-- Row A: Incident date | Time of day | Setting -->
+        <div class="grid grid-cols-1 md:grid-cols-3 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
+          <div class="p-5"><label>Incident Date</label><input id="i-date" type="date"/></div>
+          <div class="p-5">
+            <label>Time of Day</label>
+            <select id="i-time-of-day">
+              <option value="">— select —</option>
+              <option value="before_school">Before school</option>
+              <option value="morning">Morning</option>
+              <option value="mid_day">Mid-day</option>
+              <option value="afternoon">Afternoon</option>
+              <option value="after_school">After school</option>
+            </select>
+          </div>
+          <div class="p-5">
+            <label>Setting</label>
+            <select id="i-setting"></select>
+          </div>
+        </div>
+
+        <!-- Setting fallback banner (shown when stubbed setting is selected) -->
+        <div id="i-setting-banner" class="p-4 bg-surface-container border-y-2 border-black" hidden>
+          <p class="text-sm"><strong>Setting-specific questions for <span id="i-setting-banner-label"></span> are in research.</strong> This interview uses the general (classroom) question set. <button class="underline text-tertiary text-sm font-bold ml-2" type="button" id="i-setting-banner-dismiss">Dismiss</button></p>
+        </div>
+
+        <!-- Row B: Who was present | Nature of behavior -->
+        <div class="grid grid-cols-1 md:grid-cols-2 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
+          <div class="p-5">
+            <label>Who Was Present <span class="text-[.65rem] font-normal italic text-ink-soft">(select all that apply)</span></label>
+            <div class="flex flex-col gap-1 mt-1">
+              <label class="flex items-center gap-2 cursor-pointer" style="display:flex;"><input type="checkbox" name="whoPresent" value="Adults only"/>Adults only</label>
+              <label class="flex items-center gap-2 cursor-pointer" style="display:flex;"><input type="checkbox" name="whoPresent" value="Peers only"/>Peers only</label>
+              <label class="flex items-center gap-2 cursor-pointer" style="display:flex;"><input type="checkbox" name="whoPresent" value="Both adults and peers"/>Both adults and peers</label>
+              <label class="flex items-center gap-2 cursor-pointer" style="display:flex;"><input type="checkbox" name="whoPresent" value="Neither — student alone"/>Neither — student alone</label>
+            </div>
+            <p class="text-[.7rem] italic text-ink-soft mt-2">Determines whether the conditional D-PEER mini-domain surfaces.</p>
+          </div>
+          <div class="p-5">
+            <label>Nature of Behavior</label>
+            <div class="flex flex-col gap-1 mt-1">
+              <label class="flex items-center gap-2 cursor-pointer" style="display:flex;"><input type="radio" name="behaviorNature" value="self_directed"/>Self-directed</label>
+              <label class="flex items-center gap-2 cursor-pointer" style="display:flex;"><input type="radio" name="behaviorNature" value="peer_directed"/>Peer-directed</label>
+              <label class="flex items-center gap-2 cursor-pointer" style="display:flex;"><input type="radio" name="behaviorNature" value="property_directed"/>Property-directed</label>
+              <label class="flex items-center gap-2 cursor-pointer" style="display:flex;"><input type="radio" name="behaviorNature" value="authority_directed"/>Authority-directed</label>
+              <label class="flex items-center gap-2 cursor-pointer" style="display:flex;"><input type="radio" name="behaviorNature" value="multiple"/>Multiple</label>
+            </div>
           </div>
         </div>
       </section>
@@ -434,6 +602,8 @@ tailwind.config = {
           <button class="btn-primary" onclick="generateReport()">Generate Report &amp; Print</button>
         </div>
       </div>
+
+      </div><!-- /#gated-interview-content -->
     </div>
 
     <!-- PRINT-ONLY REPORT -->
@@ -445,7 +615,7 @@ tailwind.config = {
 <footer class="ml-60 border-t-2 border-black px-10 py-8 bg-black text-white no-print">
   <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between gap-6">
     <div>
-      <span class="font-headline text-lg font-bold italic">GUARD Protocol Engine</span>
+      <span class="font-headline text-lg font-bold italic">Manifesto Engine</span>
       <p class="text-[.7rem] text-stone-400 mt-2 max-w-sm">Every determination is a legal and moral obligation. The tool guides; the IEP team decides.</p>
     </div>
     <div class="flex gap-10 text-[.7rem]">
@@ -909,6 +1079,225 @@ const answers = {};
 const notes = {};
 let threatPaused = null;
 
+// =========================================================================
+// BP1 — Intake data + conditional-logic engine
+// =========================================================================
+
+const INTERVIEW_PURPOSES = [
+  { id: 'mdr',                label: 'Manifestation Determination preparation', description: 'For students with IEPs facing disciplinary removal that triggers MDR procedures.',          status: 'active',      route: 'fullInterview' },
+  { id: 'universal',          label: 'Universal post-incident interview',       description: 'For any student after a behavioral incident, regardless of IEP/504 status.',                  status: 'active',      route: 'fullInterview' },
+  { id: '504',                label: 'Section 504 incident review',             description: 'For students with 504 plans after a behavioral incident.',                                    status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 'fba',                label: 'FBA / BIP development input',             description: 'Behavior specialist or school psych collecting student voice for FBA/BIP development.',        status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 'restorative',        label: 'Restorative practice preparation',        description: 'Restorative coordinator prepping for a circle or conference.',                                 status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 're_entry',           label: 'Re-entry interview',                      description: "Counselor or admin preparing a student’s return after suspension or removal.",            status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 'bullying',           label: 'Bullying / peer conflict investigation',  description: 'Title IX or investigator interviewing a student involved in a bullying or conflict report.',   status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 'tier2',              label: 'Tier 2 check-in',                         description: 'Mentor or case manager conducting a structured Tier 2 student check-in.',                      status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 'student_requested',  label: 'Student-requested debrief',               description: 'Student asked to talk; counselor conducting a debrief with no downstream routing.',            status: 'stubbed',     route: 'comingSoon', researchAreas: [] },
+  { id: 'threat_pause',       label: 'Threat assessment routing',               description: 'Pass-through to the existing threat-pause and routing-handoff bar.',                            status: 'passthrough', route: 'existingThreatPauseBar' },
+];
+
+const SETTINGS = [
+  { id: 'classroom',     label: 'Classroom (instructional time)',      status: 'active',  fallbackTo: null },
+  { id: 'hallway',       label: 'Hallway / passing period',            status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'cafeteria',     label: 'Cafeteria / lunch',                   status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'athletic',      label: 'Athletic field / gym',                status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'playground',    label: 'Playground / recess',                 status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'locker_room',   label: 'Locker room',                         status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'bathroom',      label: 'Bathroom',                            status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'bus',           label: 'Bus / transportation',                status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'parking_lot',   label: 'Parking lot',                         status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'assembly',      label: 'Assembly / field trip',               status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'off_campus',    label: 'Off-campus school event',             status: 'stubbed', fallbackTo: 'classroom' },
+  { id: 'unstructured',  label: 'Unstructured transition (catch-all)', status: 'stubbed', fallbackTo: 'classroom' },
+];
+
+// 13 IDEA categories (used for disability multi-select)
+const IDEA_CATEGORIES = [
+  { code: 'SLD', label: 'Specific Learning Disability' },
+  { code: 'OHI', label: 'Other Health Impairment' },
+  { code: 'ASD', label: 'Autism Spectrum Disorder' },
+  { code: 'ED',  label: 'Emotional Disturbance' },
+  { code: 'ID',  label: 'Intellectual Disability' },
+  { code: 'SLI', label: 'Speech or Language Impairment' },
+  { code: 'TBI', label: 'Traumatic Brain Injury' },
+  { code: 'MD',  label: 'Multiple Disabilities' },
+  { code: 'OI',  label: 'Orthopedic Impairment' },
+  { code: 'VI',  label: 'Visual Impairment' },
+  { code: 'HI',  label: 'Hearing Impairment' },
+  { code: 'DB',  label: 'Deaf-Blindness' },
+  { code: 'DD',  label: 'Developmental Delay' },
+  { code: 'OTHER', label: 'Other or unspecified' },
+];
+
+const CONDITION_RULES = {
+  'domain.D-PEER.visible': {
+    description: 'Peer dynamics mini-domain surfaces when peers were present at incident.',
+    require: { 'incident.whoPresent': { includesAny: ['Peers only', 'Both adults and peers'] } },
+  },
+  'domain.D-BLG.visible': {
+    description: 'Belonging domain surfaces when behavior involved social dynamics, evidence of not belonging, or identity-based discrimination/microaggressions (per v4 conditional). Wired in a later prompt — placeholder for now.',
+    require: { _alwaysFalseForNow: true },
+  },
+  'domain.D-RNT.visible': {
+    description: 'Repair & Re-Entry domain surfaces when student has been or will be removed, or when behavior caused documented harm (per v4 conditional). Wired in a later prompt — placeholder for now.',
+    require: { _alwaysFalseForNow: true },
+  },
+  'field.D-CTX-04.visible': {
+    description: 'IEP Service Delivery Context only asked when student has an IEP.',
+    require: { 'profile.iepStatus': { equals: 'yes' } },
+  },
+  'purpose.fullInterview.allowed': {
+    description: 'Full interview only allowed for active purposes.',
+    require: { 'interview.purpose': { in: ['mdr', 'universal'] } },
+  },
+};
+
+// ---- engine helpers ----
+function uuid() {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+  // RFC4122 v4 fallback
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+function getStatePath(s, path) {
+  return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), s);
+}
+function checkPredicate(s, path, predicate) {
+  const val = getStatePath(s, path);
+  if (predicate.equals !== undefined) return val === predicate.equals;
+  if (predicate.notEquals !== undefined) return val !== predicate.notEquals;
+  if (predicate.in !== undefined) return Array.isArray(predicate.in) && predicate.in.includes(val);
+  if (predicate.includesAny !== undefined) {
+    if (!Array.isArray(val)) return false;
+    return predicate.includesAny.some(x => val.includes(x));
+  }
+  if (predicate.truthy === true) return !!val;
+  if (predicate.falsy === true) return !val;
+  return true;
+}
+function checkRequire(s, req) {
+  if (!req) return true;
+  if (req._alwaysFalseForNow === true) return false;
+  for (const [path, predicate] of Object.entries(req)) {
+    if (path === '_alwaysFalseForNow') continue;
+    if (!checkPredicate(s, path, predicate)) return false;
+  }
+  return true;
+}
+// Public API: pass a state and a single rule config object
+function evaluateConditions(s, conditionConfig) {
+  if (!conditionConfig) return true;
+  return checkRequire(s, conditionConfig.require);
+}
+// Convenience: look up a rule by key against the live state
+function isFlagOn(ruleKey) {
+  return evaluateConditions(state, CONDITION_RULES[ruleKey]);
+}
+
+// ---- state ----
+function initState() {
+  return {
+    schema_version: '0.9.0-beta',
+    framework: 'Manifesto',
+    tool: 'Student Voice Protocol — Appendix D',
+    interview_id: uuid(),
+    interviewer: {
+      role: null,
+      is_disciplining_admin: null,
+      preflight_completed: false,
+      bias_reflection_completed: false,
+      cultural_preparation_completed: false,
+    },
+    interview: {
+      purpose: null,
+      started_at_utc: null,
+      completed_at_utc: null,
+    },
+    profile: {
+      name: '',
+      grade: '',
+      dob: '',
+      ageBand: 'hs',
+      iepStatus: '',
+      section504Status: '',
+      ellStatus: '',
+      primaryLanguage: '',
+      aacUser: false,
+      aslUser: false,
+      disabilityCategories: [],
+    },
+    incident: {
+      date: '',
+      timeOfDay: '',
+      setting: '',
+      whoPresent: [],
+      behaviorNature: '',
+    },
+    responses: {},
+    observations: {
+      regulation_checks: [],
+      pauses_taken: 0,
+    },
+  };
+}
+const state = initState();
+
+// ---- field registry derived from DOMAINS (single source of truth) ----
+const FIELD_REGISTRY = (() => {
+  const reg = {};
+  for (const d of DOMAINS) {
+    for (const q of d.questions) {
+      reg[q.id] = { domain: d.id, label: q.label, qtype: q.qtype };
+    }
+  }
+  // Reserve D-PEER mini-domain IDs (question content authored in BP4)
+  reg['D-PEER-01'] = { domain: 'D-PEER', label: 'Peer Coercion / Pressure',   qtype: 'Inv.', reserved: true };
+  reg['D-PEER-02'] = { domain: 'D-PEER', label: 'Peer Ridicule / Humiliation', qtype: 'Inv.', reserved: true };
+  reg['D-PEER-03'] = { domain: 'D-PEER', label: 'Bystander Dynamics',          qtype: 'Dir.', reserved: true };
+  return reg;
+})();
+
+// ---- helpers used downstream by intake + state.responses provenance wrapper ----
+function gradeToAgeBand(grade) {
+  if (!grade) return 'hs';
+  const g = String(grade).toUpperCase();
+  if (g === 'K' || g === '1' || g === '2' || g === '3' || g === '4') return 'ue';
+  const n = parseInt(g, 10);
+  if (!isNaN(n)) {
+    if (n <= 4) return 'ue';
+    if (n <= 8) return 'ms';
+    return 'hs';
+  }
+  return 'hs';
+}
+
+// Wrap an answer value into the provenance shape and write into state.responses.
+// Existing answers/notes capture path remains intact; this writes alongside.
+function captureResponse(fieldId, value) {
+  state.responses[fieldId] = {
+    value: value,
+    provenance: {
+      age_band: state.profile.ageBand || currentBand,
+      tier_used: null,
+      scaffold_viewed: false,
+      rephrase_count: 0,
+      probe_count: 0,
+      response_source: 'student_voice',
+      language: 'en-US',
+      duration_seconds: null,
+      regulation_observation: null,
+      prompt_version: 'v1.0.0',
+      purpose: state.interview.purpose,
+      setting: state.incident.setting,
+      timestamp_utc: new Date().toISOString(),
+    },
+    reliability_flags: [],
+  };
+}
+
 // ---- tiny DOM helper (no innerHTML anywhere) ----
 function h(tag, props) {
   const e = document.createElement(tag);
@@ -1122,7 +1511,7 @@ function renderDomain(d) {
 }
 
 function renderQuestion(q) {
-  const card = h('div', { class: 'question-card' + (q.equityGate ? ' equity-gate' : '') });
+  const card = h('div', { class: 'question-card' + (q.equityGate ? ' equity-gate' : ''), 'data-question-id': q.id });
 
   const header = h('div', { class: 'q-header' });
   header.appendChild(h('span', { class: 'q-label' }, q.id + ' · ' + q.label));
@@ -1156,11 +1545,11 @@ function renderQuestion(q) {
   card.appendChild(tools);
 
   const ta = h('textarea', { id: 'ans-' + q.id, rows: '3', placeholder: "Capture the student\u2019s response in their own language when possible." });
-  ta.addEventListener('input', () => { answers[q.id] = ta.value; });
+  ta.addEventListener('input', () => { answers[q.id] = ta.value; captureResponse(q.id, ta.value); });
   card.appendChild(ta);
 
   record.addEventListener('click', () => toggleDictation(record, ta));
-  clearBtn.addEventListener('click', () => { ta.value = ''; answers[q.id] = ''; });
+  clearBtn.addEventListener('click', () => { ta.value = ''; answers[q.id] = ''; captureResponse(q.id, ''); });
 
   card.appendChild(h('div', { class: 'q-routing' }, 'Routes to → ' + q.routing));
   return card;
@@ -1338,7 +1727,13 @@ function getMeta() {
 function saveDraft() {
   const payload = { meta: getMeta(), band: currentBand, answers, notes, threat: threatPaused, savedAt: new Date().toISOString() };
   try {
+    // Legacy v4 draft (kept intact)
     localStorage.setItem('svp-draft', JSON.stringify(payload));
+    // BP1: per-interview state object under svp_state_<interview_id>
+    const statePayload = Object.assign({}, state, { savedAt: payload.savedAt });
+    localStorage.setItem('svp_state_' + state.interview_id, JSON.stringify(statePayload));
+    localStorage.setItem('svp_current_interview_id', state.interview_id);
+
     const stamp = 'Draft saved ' + new Date().toLocaleTimeString();
     document.getElementById('draft-stamp').textContent = stamp;
     document.getElementById('footer-stamp').textContent = stamp;
@@ -1346,25 +1741,89 @@ function saveDraft() {
 }
 function loadDraft() {
   try {
+    // Legacy v4 draft
     const raw = localStorage.getItem('svp-draft');
-    if (!raw) return;
-    const p = JSON.parse(raw);
-    if (p.band && ['hs','ms','ue'].includes(p.band)) setBand(p.band);
-    if (p.answers) Object.entries(p.answers).forEach(([k, v]) => {
-      const ta = document.getElementById('ans-' + k);
-      if (ta) { ta.value = v; answers[k] = v; }
-    });
-    if (p.notes) Object.entries(p.notes).forEach(([k, v]) => {
-      const ta = document.getElementById(k); if (ta) { ta.value = v; notes[k] = v; }
-    });
-    if (p.meta) Object.entries(p.meta).forEach(([k, v]) => {
-      if (k === 'notDiscipliner') { const n = document.getElementById('m-not-discipliner'); if (n) n.checked = !!v; }
-      else if (k === 'consent' && v) { const r = document.querySelector('input[name="consent"][value="' + v + '"]'); if (r) { r.checked = true; r.dispatchEvent(new Event('change')); } }
-      else if (k === 'consentCondition') { const n = document.getElementById('consent-condition'); if (n) n.value = v; }
-      else { const n = document.getElementById(k); if (n) n.value = v; }
-    });
-    if (p.savedAt) document.getElementById('draft-stamp').textContent = 'Draft loaded · ' + new Date(p.savedAt).toLocaleTimeString();
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p.band && ['hs','ms','ue'].includes(p.band)) setBand(p.band);
+      if (p.answers) Object.entries(p.answers).forEach(([k, v]) => {
+        const ta = document.getElementById('ans-' + k);
+        if (ta) { ta.value = v; answers[k] = v; }
+      });
+      if (p.notes) Object.entries(p.notes).forEach(([k, v]) => {
+        const ta = document.getElementById(k); if (ta) { ta.value = v; notes[k] = v; }
+      });
+      if (p.meta) Object.entries(p.meta).forEach(([k, v]) => {
+        if (k === 'notDiscipliner') { const n = document.getElementById('m-not-discipliner'); if (n) n.checked = !!v; }
+        else if (k === 'consent' && v) { const r = document.querySelector('input[name="consent"][value="' + v + '"]'); if (r) { r.checked = true; r.dispatchEvent(new Event('change')); } }
+        else if (k === 'consentCondition') { const n = document.getElementById('consent-condition'); if (n) n.value = v; }
+        else { const n = document.getElementById(k); if (n) n.value = v; }
+      });
+      if (p.savedAt) document.getElementById('draft-stamp').textContent = 'Draft loaded · ' + new Date(p.savedAt).toLocaleTimeString();
+    }
+
+    // BP1: load persisted state object
+    const currentId = localStorage.getItem('svp_current_interview_id');
+    if (currentId) {
+      const stateRaw = localStorage.getItem('svp_state_' + currentId);
+      if (stateRaw) {
+        const loaded = JSON.parse(stateRaw);
+        Object.keys(loaded).forEach(k => {
+          if (k === 'savedAt') return;
+          state[k] = loaded[k];
+        });
+        restoreInputsFromState();
+        applyProfileConditionals();
+        applySettingFallbackBanner();
+        applyDomainConditionals();
+        applyGateVisibility();
+      }
+    }
   } catch (e) { console.warn('draft load failed', e); }
+}
+
+function restoreInputsFromState() {
+  const setVal = (id, v) => { const n = document.getElementById(id); if (n && v != null) n.value = v; };
+  const setRadio = (name, v) => {
+    if (!v) return;
+    const r = document.querySelector('input[name="' + name + '"][value="' + v + '"]');
+    if (r) r.checked = true;
+  };
+  const setCheck = (id, v) => { const n = document.getElementById(id); if (n) n.checked = !!v; };
+
+  // Profile
+  setVal('m-student', state.profile.name);
+  setVal('m-grade', state.profile.grade);
+  setVal('m-dob', state.profile.dob);
+  setVal('m-language', state.profile.primaryLanguage);
+  setRadio('iepStatus', state.profile.iepStatus);
+  setRadio('section504Status', state.profile.section504Status);
+  setRadio('ellStatus', state.profile.ellStatus);
+  setCheck('m-aac', state.profile.aacUser);
+  setCheck('m-asl', state.profile.aslUser);
+  if (Array.isArray(state.profile.disabilityCategories)) {
+    state.profile.disabilityCategories.forEach(code => {
+      const cb = document.querySelector('input[name="disabilityCategories"][value="' + code + '"]');
+      if (cb) cb.checked = true;
+    });
+  }
+  const display = document.getElementById('m-age-band-display');
+  if (display) display.textContent =
+    state.profile.ageBand === 'ms' ? 'Middle School (MS)' :
+    state.profile.ageBand === 'ue' ? 'Upper Elementary (UE)' :
+    'High School (HS)';
+
+  // Incident
+  setVal('i-date', state.incident.date);
+  setVal('i-time-of-day', state.incident.timeOfDay);
+  setVal('i-setting', state.incident.setting);
+  if (Array.isArray(state.incident.whoPresent)) {
+    state.incident.whoPresent.forEach(v => {
+      const cb = document.querySelector('input[name="whoPresent"][value="' + v + '"]');
+      if (cb) cb.checked = true;
+    });
+  }
+  setRadio('behaviorNature', state.incident.behaviorNature);
 }
 
 // ---- report ----
@@ -1383,7 +1842,7 @@ function generateReport() {
   const sp = h('div', { style: 'height:1rem;' }); rpt.appendChild(sp);
 
   rpt.appendChild(h('h1', { class: 'font-headline font-bold mb-1', style: 'font-size:2.75rem;letter-spacing:-.02em;' }, 'Student Voice Protocol Report'));
-  rpt.appendChild(h('p', { class: 'text-[.75rem] uppercase tracking-widest mb-8 text-tertiary' }, 'GUARD Appendix D v4.0 · Evidence Collection for MDR Review'));
+  rpt.appendChild(h('p', { class: 'text-[.75rem] uppercase tracking-widest mb-8 text-tertiary' }, 'Manifesto Student Voice Protocol — Appendix D v4.1 · Evidence Collection for MDR Review'));
 
   // metadata table
   const metaTable = h('table', { style: 'width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:1.5rem;' });
@@ -1500,10 +1959,323 @@ function generateReport() {
   rpt.appendChild(fnd);
 
   // legal cite footer
-  const cite = h('div', { class: 'legal-cite' }, 'Report generated from GUARD Appendix D v4.0. Evidence captured is "relevant information" under 34 CFR §300.530(e) and must be reviewed by the MDR team with the parent/guardian. Person-first language preserved throughout. Data retention and FERPA handling per district policy.');
+  const cite = h('div', { class: 'legal-cite' }, 'Report generated from Manifesto Student Voice Protocol — Appendix D v4.1. Evidence captured is "relevant information" under 34 CFR §300.530(e) and must be reviewed by the MDR team with the parent/guardian. Person-first language preserved throughout. Data retention and FERPA handling per district policy.');
   rpt.appendChild(cite);
 
   window.print();
+}
+
+// ---- BP1: Purpose Selector + Coming Soon + gate visibility ----
+function renderPurposeSelector() {
+  const root = document.getElementById('purpose-cards');
+  if (!root) return;
+  clear(root);
+  INTERVIEW_PURPOSES.forEach(p => {
+    const card = h('button', {
+      type: 'button',
+      class: 'purpose-card text-left p-4 border border-black bg-white hover:bg-surface-container transition-colors',
+      'data-purpose-id': p.id,
+    });
+    const head = h('div', { class: 'flex items-center gap-2 mb-1' });
+    let dotClass = 'bg-green-600';
+    let dotLabel = 'Active';
+    if (p.status === 'stubbed') { dotClass = 'bg-amber-500'; dotLabel = 'In development'; }
+    else if (p.status === 'passthrough') { dotClass = 'bg-blue-700'; dotLabel = 'Passthrough'; }
+    head.appendChild(h('span', { class: 'inline-block w-2.5 h-2.5 ' + dotClass, 'aria-hidden': 'true' }));
+    head.appendChild(h('span', { class: 'text-[.6rem] font-bold uppercase tracking-widest text-ink-soft' }, dotLabel));
+    card.appendChild(head);
+    card.appendChild(h('div', { class: 'font-headline text-lg font-bold leading-tight mb-1' }, p.label));
+    card.appendChild(h('div', { class: 'text-[.85rem] leading-snug text-ink-soft' }, p.description));
+    card.addEventListener('click', () => selectPurpose(p.id));
+    root.appendChild(card);
+  });
+}
+
+function renderComingSoon(purpose) {
+  const root = document.getElementById('coming-soon-section');
+  if (!root) return;
+  clear(root);
+  root.appendChild(h('h2', { class: 'font-headline text-3xl font-bold mb-2 mt-2' }, purpose.label));
+  root.appendChild(h('p', { class: 'text-sm mb-4' }, 'In development — currently in research phase.'));
+
+  const ra = purpose.researchAreas || [];
+  if (ra.length > 0) {
+    root.appendChild(h('p', { class: 'text-[.7rem] uppercase tracking-widest font-bold mb-2 text-ink-soft' }, 'Research areas'));
+    const ul = h('ul', { class: 'list-disc pl-5 text-sm space-y-1 mb-5' });
+    ra.forEach(area => ul.appendChild(h('li', null, area)));
+    root.appendChild(ul);
+  } else {
+    root.appendChild(h('p', { class: 'text-sm italic text-ink-soft mb-5' }, 'Research areas for this path will be listed here in a later build.'));
+  }
+
+  const back = h('button', { class: 'btn-secondary', type: 'button' }, 'Back to purpose selection');
+  back.addEventListener('click', resetPurposeSelection);
+  root.appendChild(back);
+}
+
+function selectPurpose(purposeId) {
+  const purpose = INTERVIEW_PURPOSES.find(p => p.id === purposeId);
+  if (!purpose) return;
+  state.interview.purpose = purpose.id;
+  if (!state.interview.started_at_utc) state.interview.started_at_utc = new Date().toISOString();
+
+  if (purpose.status === 'stubbed') {
+    renderComingSoon(purpose);
+  }
+  applyGateVisibility();
+
+  const focusId = (purpose.status === 'active') ? 'gated-interview-content' :
+                  (purpose.status === 'stubbed') ? 'coming-soon-section' :
+                  'threat-passthrough-section';
+  const node = document.getElementById(focusId);
+  if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetPurposeSelection() {
+  state.interview.purpose = null;
+  applyGateVisibility();
+  const sel = document.getElementById('purpose-selector-section');
+  if (sel) sel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function applyGateVisibility() {
+  const purposeId = state.interview.purpose;
+  const purposeObj = INTERVIEW_PURPOSES.find(p => p.id === purposeId);
+  const status = purposeObj ? purposeObj.status : null;
+
+  const selector = document.getElementById('purpose-selector-section');
+  const comingSoon = document.getElementById('coming-soon-section');
+  const threatPass = document.getElementById('threat-passthrough-section');
+  const gated = document.getElementById('gated-interview-content');
+
+  // Default: only Selector visible
+  if (selector) selector.hidden = false;
+  if (comingSoon) comingSoon.hidden = true;
+  if (threatPass) threatPass.hidden = true;
+  if (gated) gated.hidden = true;
+
+  if (status === 'active') {
+    if (selector) selector.hidden = true;
+    if (gated) gated.hidden = false;
+  } else if (status === 'stubbed') {
+    if (selector) selector.hidden = true;
+    if (comingSoon) comingSoon.hidden = false;
+  } else if (status === 'passthrough') {
+    if (selector) selector.hidden = true;
+    if (threatPass) threatPass.hidden = false;
+  }
+}
+
+// ---- BP1 commit 4: Profile expansion + Incident Intake wiring ----
+
+// Render the IDEA disability category multi-select grid
+function renderIdeaCheckboxes() {
+  const root = document.getElementById('m-disability-grid');
+  if (!root) return;
+  clear(root);
+  IDEA_CATEGORIES.forEach(cat => {
+    const lbl = h('label', {
+      class: 'flex items-start gap-2 cursor-pointer text-[.85rem] border border-outline-variant px-2 py-1.5',
+      style: 'display:flex;',
+      title: cat.label,
+    });
+    lbl.appendChild(h('input', { type: 'checkbox', name: 'disabilityCategories', value: cat.code, class: 'mt-0.5' }));
+    lbl.appendChild(h('span', null, cat.label + ' (' + cat.code + ')'));
+    root.appendChild(lbl);
+  });
+}
+
+// Populate the Setting dropdown from SETTINGS data
+function renderSettingsOptions() {
+  const sel = document.getElementById('i-setting');
+  if (!sel) return;
+  clear(sel);
+  sel.appendChild(h('option', { value: '' }, '— select —'));
+  SETTINGS.forEach(s => {
+    const opt = h('option', { value: s.id }, s.label + (s.status === 'stubbed' ? ' (in research)' : ''));
+    sel.appendChild(opt);
+  });
+}
+
+// Mirror v4 metadata inputs + new profile fields into state.profile.
+// Same form input writes to state.profile — no duplicate UI.
+function wireProfileMirror() {
+  // Simple text-mirror pairs (DOM id → state.profile key)
+  const simplePairs = [
+    ['m-student', 'name'],
+    ['m-dob', 'dob'],
+    ['m-language', 'primaryLanguage'],
+  ];
+  simplePairs.forEach(([elId, key]) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const sync = () => { state.profile[key] = el.value || ''; };
+    el.addEventListener('input', sync);
+    sync();
+  });
+
+  // Grade dropdown also drives ageBand auto-derivation and updates the displayed band.
+  const grade = document.getElementById('m-grade');
+  if (grade) {
+    const sync = () => {
+      state.profile.grade = grade.value || '';
+      const band = gradeToAgeBand(grade.value);
+      state.profile.ageBand = band;
+      const display = document.getElementById('m-age-band-display');
+      if (display) display.textContent =
+        band === 'hs' ? 'High School (HS)' :
+        band === 'ms' ? 'Middle School (MS)' :
+        'Upper Elementary (UE)';
+      // Mirror the canonical band into the top-of-page age-band selector.
+      if (band !== currentBand && typeof setBand === 'function') setBand(band);
+    };
+    grade.addEventListener('change', sync);
+    sync();
+  }
+
+  // Radio groups → state.profile
+  const radioGroups = [
+    ['iepStatus', 'iepStatus'],
+    ['section504Status', 'section504Status'],
+    ['ellStatus', 'ellStatus'],
+  ];
+  radioGroups.forEach(([name, key]) => {
+    document.querySelectorAll('input[name="' + name + '"]').forEach(r => {
+      r.addEventListener('change', () => {
+        if (r.checked) state.profile[key] = r.value;
+        applyProfileConditionals();
+      });
+    });
+  });
+
+  // Checkboxes (single)
+  const aac = document.getElementById('m-aac');
+  if (aac) aac.addEventListener('change', () => { state.profile.aacUser = !!aac.checked; });
+  const asl = document.getElementById('m-asl');
+  if (asl) asl.addEventListener('change', () => { state.profile.aslUser = !!asl.checked; });
+
+  // Disability multi-select checkboxes
+  document.querySelectorAll('input[name="disabilityCategories"]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const checked = Array.from(document.querySelectorAll('input[name="disabilityCategories"]:checked')).map(c => c.value);
+      state.profile.disabilityCategories = checked;
+    });
+  });
+}
+
+// Show/hide profile fields that are conditional on other answers (ELL → language; IEP → disability cats)
+function applyProfileConditionals() {
+  const langCell = document.getElementById('m-language-cell');
+  if (langCell) langCell.hidden = (state.profile.ellStatus !== 'yes');
+  const disCell = document.getElementById('m-disability-cell');
+  if (disCell) disCell.hidden = (state.profile.iepStatus !== 'yes');
+}
+
+// Wire Incident Intake fields → state.incident
+function wireIncidentIntake() {
+  const date = document.getElementById('i-date');
+  if (date) date.addEventListener('input', () => { state.incident.date = date.value || ''; });
+  const tod = document.getElementById('i-time-of-day');
+  if (tod) tod.addEventListener('change', () => { state.incident.timeOfDay = tod.value || ''; });
+
+  const setting = document.getElementById('i-setting');
+  if (setting) setting.addEventListener('change', () => {
+    state.incident.setting = setting.value || '';
+    applySettingFallbackBanner();
+  });
+
+  document.querySelectorAll('input[name="whoPresent"]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const checked = Array.from(document.querySelectorAll('input[name="whoPresent"]:checked')).map(c => c.value);
+      state.incident.whoPresent = checked;
+      // D-PEER visibility may change as a result; toggle now.
+      applyDomainConditionals();
+    });
+  });
+
+  document.querySelectorAll('input[name="behaviorNature"]').forEach(r => {
+    r.addEventListener('change', () => {
+      if (r.checked) state.incident.behaviorNature = r.value;
+    });
+  });
+
+  // Banner dismiss
+  const dismiss = document.getElementById('i-setting-banner-dismiss');
+  if (dismiss) dismiss.addEventListener('click', () => {
+    const banner = document.getElementById('i-setting-banner');
+    if (banner) banner.hidden = true;
+  });
+}
+
+function applySettingFallbackBanner() {
+  const banner = document.getElementById('i-setting-banner');
+  const label = document.getElementById('i-setting-banner-label');
+  if (!banner || !label) return;
+  const sel = SETTINGS.find(s => s.id === state.incident.setting);
+  if (sel && sel.status === 'stubbed') {
+    label.textContent = sel.label;
+    banner.hidden = false;
+  } else {
+    banner.hidden = true;
+  }
+}
+
+// Toggle conditional domain visibility (D-PEER, plus placeholders for D-BLG / D-RNT).
+// Domain shells are rendered by renderDomain(); this wires the data-conditional sections.
+function applyDomainConditionals() {
+  // D-PEER shell visibility
+  const peerSection = document.getElementById('dom-D-PEER');
+  if (peerSection) peerSection.hidden = !isFlagOn('domain.D-PEER.visible');
+
+  // D-CTX-04 field visibility (depends on profile.iepStatus === 'yes')
+  const ctx4 = document.querySelector('[data-question-id="D-CTX-04"]');
+  if (ctx4) ctx4.hidden = !isFlagOn('field.D-CTX-04.visible');
+}
+
+// Render the D-PEER mini-domain shell. Question content lands in BP4;
+// this shell exists so AC #11 (visibility surfacing) is testable in BP1.
+function renderDPeerShell() {
+  const root = document.getElementById('domains-root');
+  if (!root) return;
+  const section = h('section', { id: 'dom-D-PEER', hidden: true });
+  const det = h('details', { class: 'group', open: '' });
+  const sum = h('summary', { class: 'domain-header no-print' });
+  const left = h('div');
+  const num = h('span', { class: 'domain-num' });
+  num.appendChild(document.createTextNode('Domain 10 · D-PEER'));
+  num.appendChild(document.createTextNode(' '));
+  num.appendChild(h('span', { class: 'domain-cond' }, 'Conditional · BP4'));
+  left.appendChild(num);
+  left.appendChild(h('h2', { class: 'domain-title' }, 'Peer Dynamics'));
+  sum.appendChild(left);
+  const chev = h('span', { class: 'material-symbols-outlined chevron text-3xl' });
+  chev.textContent = 'expand_more';
+  sum.appendChild(chev);
+  det.appendChild(sum);
+
+  const body = h('div', { class: 'pb-10 space-y-6' });
+  body.appendChild(makeInfoBanner(
+    'Conditional — surfaces when peers were present',
+    'Three reserved field IDs (D-PEER-01 Peer Coercion / Pressure, D-PEER-02 Peer Ridicule / Humiliation, D-PEER-03 Bystander Dynamics) are in the registry. NICHD-aligned, age-banded question content is authored in Build Prompt 4.'
+  ));
+  // Reserved-IDs preview — read-only, no inputs.
+  ['D-PEER-01','D-PEER-02','D-PEER-03'].forEach(fid => {
+    const reg = FIELD_REGISTRY[fid];
+    if (!reg) return;
+    const card = h('div', { class: 'question-card', 'data-question-id': fid });
+    const head = h('div', { class: 'q-header' });
+    head.appendChild(h('span', { class: 'q-label' }, fid + ' · ' + reg.label));
+    const chipClass = reg.qtype === 'Inv.' ? 'q-chip inv' : reg.qtype === 'Dir.' ? 'q-chip dir' : 'q-chip opt';
+    head.appendChild(h('span', { class: chipClass }, reg.qtype));
+    head.appendChild(h('span', { class: 'text-[.6rem] uppercase tracking-widest text-ink-soft italic' }, '· content in BP4'));
+    card.appendChild(head);
+    card.appendChild(h('p', { class: 'q-prompt italic text-ink-soft' }, 'Question content reserved — to be authored in Build Prompt 4.'));
+    body.appendChild(card);
+  });
+
+  det.appendChild(body);
+  section.appendChild(det);
+  root.appendChild(section);
 }
 
 // ---- init ----
@@ -1514,11 +2286,21 @@ document.addEventListener('DOMContentLoaded', () => {
   renderGroundRules();
   renderVocabTables();
   renderDomains();
+  renderDPeerShell();
   renderClosure();
   renderObservationLog();
   renderSafetyRubric();
   renderReluctance();
   wireConsent();
+  // BP1 intake wiring
+  renderIdeaCheckboxes();
+  renderSettingsOptions();
+  renderPurposeSelector();
+  wireProfileMirror();
+  wireIncidentIntake();
+  applyProfileConditionals();
+  applyDomainConditionals();
+  applyGateVisibility();
 
   document.querySelectorAll('#age-band-buttons .age-pill').forEach(b => {
     b.addEventListener('click', () => setBand(b.dataset.band));
@@ -1538,6 +2320,8 @@ window.saveDraft = saveDraft;
 window.generateReport = generateReport;
 window.toggleDrawer = toggleDrawer;
 window.pauseForThreat = pauseForThreat;
+window.selectPurpose = selectPurpose;
+window.resetPurposeSelection = resetPurposeSelection;
 </script>
 </body>
 </html>
