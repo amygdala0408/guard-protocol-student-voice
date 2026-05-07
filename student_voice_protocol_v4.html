@@ -2041,6 +2041,288 @@ function renderDomain(d) {
   return section;
 }
 
+// =========================================================================
+// BP2 — icon affordance helpers (Info / Rephrase / Probe per question card)
+// =========================================================================
+//
+// One panel can be open at a time across the whole interview. Opening a
+// new panel anywhere closes whichever was open. Panels live inside the
+// .question-card after .q-routing per BP2 §2 (sibling of routing line).
+
+let currentlyOpenPanelId = null;
+
+function closeAllPanels() {
+  if (!currentlyOpenPanelId) return;
+  const panel = document.getElementById(currentlyOpenPanelId);
+  if (panel) {
+    panel.hidden = true;
+    panel.setAttribute('aria-hidden', 'true');
+  }
+  document.querySelectorAll('[data-icon-trigger="true"]').forEach(btn => {
+    btn.setAttribute('aria-expanded', 'false');
+  });
+  currentlyOpenPanelId = null;
+}
+
+function openPanel(panel, triggerBtn, populateFn) {
+  if (currentlyOpenPanelId === panel.id) {
+    closeAllPanels();
+    return;
+  }
+  closeAllPanels();
+  if (typeof populateFn === 'function') populateFn(panel);
+  panel.hidden = false;
+  panel.setAttribute('aria-hidden', 'false');
+  triggerBtn.setAttribute('aria-expanded', 'true');
+  currentlyOpenPanelId = panel.id;
+}
+
+function makeIconPanelCloseButton() {
+  const btn = h('button', { class: 'btn-ghost panel-close no-print', type: 'button', 'aria-label': 'Close panel' });
+  btn.appendChild(icon('close', 16));
+  btn.appendChild(document.createTextNode(' Close'));
+  btn.addEventListener('click', () => closeAllPanels());
+  return btn;
+}
+
+function bandLabel(band) {
+  return band === 'hs' ? 'High School (HS)' : band === 'ms' ? 'Middle School (MS)' : 'Upper Elementary (UE)';
+}
+
+// ---- Info panel ----
+function populateInfoPanel(panel, fieldId) {
+  clear(panel);
+  panel.classList.remove('placeholder');
+  const content = getIconContent(fieldId);
+  const info = content.info || PLACEHOLDER_INFO;
+  panel.appendChild(h('h4', null, 'Why am I asking this?'));
+
+  if (info.draft === true) {
+    panel.classList.add('placeholder');
+    panel.appendChild(h('p', { class: 'panel-meta' }, 'Placeholder content'));
+    panel.appendChild(h('p', null, info.placeholderNote || PLACEHOLDER_INFO.placeholderNote));
+  } else {
+    if (info.construct) panel.appendChild(h('p', { style: 'font-weight:700;' }, info.construct));
+    if (info.why) panel.appendChild(h('p', null, info.why));
+    if (info.watchFor) {
+      const watch = h('p', null);
+      watch.appendChild(h('strong', null, 'Watch for: '));
+      watch.appendChild(document.createTextNode(info.watchFor));
+      panel.appendChild(watch);
+    }
+    if (Array.isArray(info.research) && info.research.length > 0) {
+      panel.appendChild(h('h5', null, 'Research basis'));
+      const ul = h('ul');
+      info.research.forEach(r => ul.appendChild(h('li', null, r)));
+      panel.appendChild(ul);
+    }
+  }
+  panel.appendChild(makeIconPanelCloseButton());
+}
+
+// ---- Rephrase panel ----
+function populateRephrasePanel(panel, fieldId, q, promptNode) {
+  clear(panel);
+  panel.classList.remove('placeholder');
+  panel.appendChild(h('h4', null, 'Ask it another way'));
+
+  const hasPrompts = q && q.prompts && q.prompts.hs && q.prompts.ms && q.prompts.ue;
+  if (!hasPrompts) {
+    // Placeholder for D-PEER reserved cards (prompts authored in BP4).
+    panel.classList.add('placeholder');
+    panel.appendChild(h('p', { class: 'panel-meta' }, 'Placeholder content'));
+    panel.appendChild(h('p', null, 'Rephrase variants pending — D-PEER question content lands in Build Prompt 4.'));
+    panel.appendChild(makeIconPanelCloseButton());
+    return;
+  }
+
+  panel.appendChild(h('p', null, 'If the student didn’t engage, try a different developmental band. Do not compound — pick one and use it whole.'));
+
+  const otherBands = ['hs', 'ms', 'ue'].filter(b => b !== currentBand);
+  otherBands.forEach(band => {
+    const card = h('div', { class: 'rephrase-card' });
+    card.appendChild(h('div', { class: 'band-tag' }, bandLabel(band)));
+    card.appendChild(h('p', { style: 'font-style:italic;' }, q.prompts[band]));
+    const useBtn = h('button', { class: 'btn-secondary', type: 'button', style: 'margin-top:.5rem;font-size:.65rem;padding:.4rem .9rem;' }, 'Use this version');
+    useBtn.addEventListener('click', () => {
+      // Per-question rephrase: update only the visible prompt node;
+      // do NOT mutate the global currentBand.
+      if (promptNode) promptNode.textContent = q.prompts[band];
+      const entry = ensureResponse(fieldId);
+      entry.provenance.rephrase_count = (entry.provenance.rephrase_count || 0) + 1;
+      closeAllPanels();
+    });
+    card.appendChild(useBtn);
+    panel.appendChild(card);
+  });
+  panel.appendChild(makeIconPanelCloseButton());
+}
+
+// ---- Probe panel ----
+const PROBE_GROUP_ORDER = [
+  { kind: 'open', subhead: 'Open invitations (highest quality).' },
+  { kind: 'cued', subhead: 'Cued (echo the student’s own language).' },
+  { kind: 'directive', subhead: 'Directive (specific factual question).' },
+  { kind: 'option_posing', subhead: 'If the answer is still thin — option-posing carries suggestibility risk.' },
+];
+
+function populateProbePanel(panel, fieldId, card) {
+  clear(panel);
+  panel.classList.remove('placeholder');
+  panel.appendChild(h('h4', null, 'Probe deeper — NICHD invitational hierarchy'));
+
+  const content = getIconContent(fieldId);
+  const probes = Array.isArray(content.probe) ? content.probe : [];
+
+  if (probes.length === 0) {
+    panel.classList.add('placeholder');
+    panel.appendChild(h('p', { class: 'panel-meta' }, 'Placeholder content'));
+    panel.appendChild(h('p', null, 'Probes pending research synthesis — content for this conditional domain field will be authored in a later build (research-bank §A.6, §A.7, §E.1, §E.2).'));
+    panel.appendChild(makeIconPanelCloseButton());
+    return;
+  }
+
+  panel.appendChild(h('p', null, 'Try open invitations first. Pick one. Never compound. Echo the student’s own words when possible.'));
+
+  PROBE_GROUP_ORDER.forEach(group => {
+    const items = probes.filter(p => p.kind === group.kind);
+    if (items.length === 0) return; // empty groups suppress subhead
+
+    const groupWrap = h('div', { class: group.kind === 'option_posing' ? 'probe-group-option-posing' : '' });
+    groupWrap.appendChild(h('h5', null, group.subhead));
+
+    const ul = h('ul');
+    items.forEach(p => {
+      const li = h('li', { class: 'probe-item' });
+      li.appendChild(h('span', { class: 'probe-text' }, p.text));
+      const useBtn = h('button', { class: 'btn-ghost', type: 'button', style: 'font-size:.55rem;padding:.25rem .55rem;' }, 'Used this probe');
+      useBtn.addEventListener('click', () => {
+        const entry = ensureResponse(fieldId);
+        entry.provenance.probe_count = (entry.provenance.probe_count || 0) + 1;
+        if (entry.provenance.probe_count >= 3) {
+          if (!Array.isArray(entry.reliability_flags)) entry.reliability_flags = [];
+          if (!entry.reliability_flags.includes('suggestive_risk')) {
+            entry.reliability_flags.push('suggestive_risk');
+          }
+          ensureSuggestiveWarnChip(card);
+        }
+        li.classList.add('used');
+        setTimeout(() => li.classList.remove('used'), 600);
+      });
+      li.appendChild(useBtn);
+      ul.appendChild(li);
+    });
+    groupWrap.appendChild(ul);
+    panel.appendChild(groupWrap);
+  });
+
+  panel.appendChild(h('p', { class: 'panel-meta' }, 'When the student offers nothing further, accept the silence. “I don’t know” is data.'));
+  panel.appendChild(makeIconPanelCloseButton());
+}
+
+function ensureSuggestiveWarnChip(card) {
+  if (!card) return;
+  if (card.querySelector('.q-chip.suggestive-warn')) return;
+  const header = card.querySelector('.q-header');
+  if (!header) return;
+  const chip = h('span', {
+    class: 'q-chip suggestive-warn no-print',
+    title: 'Multiple probes — review for suggestibility before using as evidence.',
+    'aria-label': 'Multiple probes — review for suggestibility before using as evidence.',
+  }, 'Multi-probe');
+  header.appendChild(chip);
+}
+
+// Build the three trigger buttons + panels for a question card. Caller
+// passes the card, an object with at least { id, prompts? }, and the
+// prompt node whose textContent the Rephrase panel updates.
+function attachIconAffordances(card, q, promptNode) {
+  const fieldId = q.id;
+  const tools = card.querySelector('.q-tools');
+  if (!tools) return;
+
+  const infoPanelId = 'panel-info-' + fieldId;
+  const rephrasePanelId = 'panel-rephrase-' + fieldId;
+  const probePanelId = 'panel-probe-' + fieldId;
+
+  const infoBtn = h('button', {
+    class: 'btn-ghost no-print',
+    type: 'button',
+    'aria-expanded': 'false',
+    'aria-controls': infoPanelId,
+    'data-icon-trigger': 'true',
+    title: 'Why am I asking?',
+    'aria-label': 'Why am I asking?',
+  });
+  infoBtn.appendChild(icon('info', 16));
+  infoBtn.appendChild(document.createTextNode(' Why am I asking?'));
+  tools.appendChild(infoBtn);
+
+  const rephraseBtn = h('button', {
+    class: 'btn-ghost no-print',
+    type: 'button',
+    'aria-expanded': 'false',
+    'aria-controls': rephrasePanelId,
+    'data-icon-trigger': 'true',
+    title: 'Ask it another way',
+    'aria-label': 'Ask it another way',
+  });
+  rephraseBtn.appendChild(icon('autorenew', 16));
+  rephraseBtn.appendChild(document.createTextNode(' Ask it another way'));
+  tools.appendChild(rephraseBtn);
+
+  const probeBtn = h('button', {
+    class: 'btn-ghost no-print',
+    type: 'button',
+    'aria-expanded': 'false',
+    'aria-controls': probePanelId,
+    'data-icon-trigger': 'true',
+    title: 'Probe deeper',
+    'aria-label': 'Probe deeper',
+  });
+  probeBtn.appendChild(icon('psychology_alt', 16));
+  probeBtn.appendChild(document.createTextNode(' Probe deeper'));
+  tools.appendChild(probeBtn);
+
+  const infoPanel = h('div', {
+    class: 'icon-panel info-panel no-print',
+    id: infoPanelId,
+    role: 'region',
+    'aria-label': 'Why am I asking this?',
+    hidden: true,
+    'aria-hidden': 'true',
+  });
+  const rephrasePanel = h('div', {
+    class: 'icon-panel rephrase-panel no-print',
+    id: rephrasePanelId,
+    role: 'region',
+    'aria-label': 'Ask it another way',
+    hidden: true,
+    'aria-hidden': 'true',
+  });
+  const probePanel = h('div', {
+    class: 'icon-panel probe-panel no-print',
+    id: probePanelId,
+    role: 'region',
+    'aria-label': 'Probe deeper — NICHD invitational hierarchy',
+    hidden: true,
+    'aria-hidden': 'true',
+  });
+  card.appendChild(infoPanel);
+  card.appendChild(rephrasePanel);
+  card.appendChild(probePanel);
+
+  infoBtn.addEventListener('click', () => {
+    openPanel(infoPanel, infoBtn, p => populateInfoPanel(p, fieldId));
+  });
+  rephraseBtn.addEventListener('click', () => {
+    openPanel(rephrasePanel, rephraseBtn, p => populateRephrasePanel(p, fieldId, q, promptNode));
+  });
+  probeBtn.addEventListener('click', () => {
+    openPanel(probePanel, probeBtn, p => populateProbePanel(p, fieldId, card));
+  });
+}
+
 function renderQuestion(q) {
   const card = h('div', { class: 'question-card' + (q.equityGate ? ' equity-gate' : ''), 'data-question-id': q.id });
 
@@ -2083,6 +2365,10 @@ function renderQuestion(q) {
   clearBtn.addEventListener('click', () => { ta.value = ''; answers[q.id] = ''; captureResponse(q.id, ''); });
 
   card.appendChild(h('div', { class: 'q-routing' }, 'Routes to → ' + q.routing));
+
+  // BP2 — three interviewer affordances (Info / Rephrase / Probe).
+  attachIconAffordances(card, q, prompt);
+
   return card;
 }
 
@@ -2789,7 +3075,10 @@ function renderDPeerShell() {
     'Conditional — surfaces when peers were present',
     'Three reserved field IDs (D-PEER-01 Peer Coercion / Pressure, D-PEER-02 Peer Ridicule / Humiliation, D-PEER-03 Bystander Dynamics) are in the registry. NICHD-aligned, age-banded question content is authored in Build Prompt 4.'
   ));
-  // Reserved-IDs preview — read-only, no inputs.
+  // Reserved-IDs preview — read-only, no inputs. BP2 attaches the three
+  // interviewer-icon affordances; Info/Probe render the placeholder
+  // variant (D-BLG/D-RNT/D-PEER fall through to PLACEHOLDER_INFO/PROBES),
+  // and Rephrase renders its own placeholder since q.prompts is absent.
   ['D-PEER-01','D-PEER-02','D-PEER-03'].forEach(fid => {
     const reg = FIELD_REGISTRY[fid];
     if (!reg) return;
@@ -2800,7 +3089,16 @@ function renderDPeerShell() {
     head.appendChild(h('span', { class: chipClass }, reg.qtype));
     head.appendChild(h('span', { class: 'text-[.6rem] uppercase tracking-widest text-ink-soft italic' }, '· content in BP4'));
     card.appendChild(head);
-    card.appendChild(h('p', { class: 'q-prompt italic text-ink-soft' }, 'Question content reserved — to be authored in Build Prompt 4.'));
+    const promptP = h('p', { class: 'q-prompt italic text-ink-soft' }, 'Question content reserved — to be authored in Build Prompt 4.');
+    card.appendChild(promptP);
+
+    // Empty .q-tools so attachIconAffordances has a target. No Listen/
+    // Record/Clear here — those tools require q.prompts and a textarea
+    // that BP4 will introduce.
+    card.appendChild(h('div', { class: 'q-tools' }));
+    card.appendChild(h('div', { class: 'q-routing' }, 'Routes to → Peer dynamics analysis (BP4)'));
+
+    attachIconAffordances(card, { id: fid }, promptP);
     body.appendChild(card);
   });
 
