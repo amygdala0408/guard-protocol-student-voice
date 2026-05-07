@@ -119,6 +119,25 @@ tailwind.config = {
 
   .consent-banner { border:2px solid #78100b; background:#fff2f0; padding:1rem 1.25rem; font-family:"Public Sans",sans-serif; font-size:.85rem; }
 
+  /* BP2 — interviewer icon panels (Info / Rephrase / Probe) */
+  .icon-panel { border:2px solid #000; background:#FAFAF7; padding:14px 18px; margin-top:10px; }
+  .icon-panel h4 { font-family:"Newsreader",serif; font-weight:700; font-size:.95rem; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
+  .icon-panel h5 { font-family:"Public Sans",sans-serif; font-weight:800; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; margin-top:10px; margin-bottom:4px; color:#1b1c1a; }
+  .icon-panel p { font-size:.9rem; line-height:1.55; margin-bottom:6px; }
+  .icon-panel ul { font-size:.9rem; line-height:1.5; margin-top:6px; padding-left:18px; list-style:disc; }
+  .icon-panel li + li { margin-top:6px; }
+  .icon-panel .panel-meta { font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:#5A5A55; margin-top:10px; }
+  .icon-panel.placeholder { background:#FFF8E5; border-color:#7A6A2A; }
+  .icon-panel .probe-group-option-posing { border-top:1px solid #C8A93E; padding-top:8px; margin-top:10px; }
+  .icon-panel .probe-group-option-posing h5 { color:#7A6A2A; }
+  .icon-panel .rephrase-card { border:1px solid #000; padding:.75rem 1rem; margin-top:.6rem; background:#fff; }
+  .icon-panel .rephrase-card .band-tag { font-family:"Public Sans",sans-serif; font-size:.6rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; color:#78100b; margin-bottom:.25rem; }
+  .icon-panel .probe-item { display:flex; align-items:flex-start; gap:.75rem; }
+  .icon-panel .probe-item .probe-text { flex:1; }
+  .icon-panel .probe-item.used { opacity:.45; transition:opacity .25s; }
+  .icon-panel .panel-close { margin-top:10px; }
+  .q-chip.suggestive-warn { background:#FFF8E5; color:#7A6A2A; border:1px solid #7A6A2A; }
+
   @media print {
     body { background:#fff; color:#000; font-size:10pt; }
     header, aside, #reluctance-drawer, .drawer-btn, .threat-pause-bar, .no-print { display:none !important; }
@@ -1274,28 +1293,60 @@ function gradeToAgeBand(grade) {
   return 'hs';
 }
 
-// Wrap an answer value into the provenance shape and write into state.responses.
-// Existing answers/notes capture path remains intact; this writes alongside.
+// Default provenance shape for a newly-initialized response entry.
+// Centralized so BP2+ helpers (ensureResponse, capture, icon handlers) stay aligned.
+function defaultProvenance() {
+  return {
+    age_band: state.profile.ageBand || currentBand,
+    tier_used: null,
+    scaffold_viewed: false,
+    rephrase_count: 0,
+    probe_count: 0,
+    response_source: 'student_voice',
+    language: 'en-US',
+    duration_seconds: null,
+    regulation_observation: null,
+    prompt_version: 'v1.0.0',
+    purpose: state.interview.purpose,
+    setting: state.incident.setting,
+    timestamp_utc: new Date().toISOString(),
+  };
+}
+
+// Initialize state.responses[fieldId] if absent without mutating an existing entry.
+// BP2 icon handlers (Rephrase / Probe) use this so they can increment provenance
+// counters even before the textarea has been touched.
+function ensureResponse(fieldId) {
+  if (!state.responses[fieldId]) {
+    state.responses[fieldId] = {
+      value: '',
+      provenance: defaultProvenance(),
+      reliability_flags: [],
+    };
+  }
+  return state.responses[fieldId];
+}
+
+// Merge-aware capture. BP1 originally replaced the entry on every keystroke,
+// which would zero out provenance counters bumped by BP2's Rephrase/Probe
+// handlers. BP2 refactor: preserve existing provenance counters and
+// reliability_flags; update value + the always-fresh provenance fields.
 function captureResponse(fieldId, value) {
+  const existing = state.responses[fieldId];
+  if (existing) {
+    existing.value = value;
+    existing.provenance.timestamp_utc = new Date().toISOString();
+    existing.provenance.age_band = state.profile.ageBand || currentBand;
+    existing.provenance.purpose = state.interview.purpose;
+    existing.provenance.setting = state.incident.setting;
+    return existing;
+  }
   state.responses[fieldId] = {
     value: value,
-    provenance: {
-      age_band: state.profile.ageBand || currentBand,
-      tier_used: null,
-      scaffold_viewed: false,
-      rephrase_count: 0,
-      probe_count: 0,
-      response_source: 'student_voice',
-      language: 'en-US',
-      duration_seconds: null,
-      regulation_observation: null,
-      prompt_version: 'v1.0.0',
-      purpose: state.interview.purpose,
-      setting: state.incident.setting,
-      timestamp_utc: new Date().toISOString(),
-    },
+    provenance: defaultProvenance(),
     reliability_flags: [],
   };
+  return state.responses[fieldId];
 }
 
 // ---- tiny DOM helper (no innerHTML anywhere) ----
