@@ -53,7 +53,7 @@ Nothing in this codebase produces a determination, verdict, or recommendation ab
 
 ## Current state
 
-**Master is at v4.1.** BP1 is merged. The repo records 7 commits: initial v4 + BP1 spec archive + 4 logical BP1 implementation chunks + the merge commit.
+**Master is at v4.1 with BP1 + BP2 merged.** PRs [#1](https://github.com/amygdala0408/guard-protocol-student-voice/pull/1) and [#2](https://github.com/amygdala0408/guard-protocol-student-voice/pull/2) are merged.
 
 **What BP1 added:**
 
@@ -70,16 +70,33 @@ Nothing in this codebase produces a determination, verdict, or recommendation ab
 - **Provenance metadata wrapper** for `state.responses` — `captureResponse(fieldId, value)` writes the v8-shaped entry with `age_band / purpose / setting / prompt_version / language / timestamp_utc` populated; other fields stay at defaults until BP2/3 wire them
 - **Per-interview localStorage persistence** under `svp_state_<interview_id>`, with `svp_current_interview_id` as the load pointer; legacy `svp-draft` key preserved
 
+**What BP2 added:**
+
+- **Three interviewer-facing icon buttons on every question card:** Info ("Why am I asking?"), Rephrase ("Ask it another way"), Probe ("Probe deeper") — alongside existing Listen / Record / Clear. All `no-print` — excluded from PDF view.
+- **Three inline panels per question** appended after `.q-routing` inside the card. Single-panel-open semantics globally — opening a new panel anywhere closes whichever was open. Tracked via module-scoped `currentlyOpenPanelId`. Panels use `role="region"` + `aria-label`; triggers carry `aria-expanded` + `aria-controls` + `data-icon-trigger="true"` (for blanket-reset on close).
+- **`ICON_CONTENT` data structure** — 40 keyed entries (28 authored mandatory-domain + 12 placeholder for D-BLG/D-RNT/D-PEER). Looked up via `getIconContent(fieldId)` with placeholder fallback for unknown IDs. Authored Info cards respect ≤100-word budget.
+- **NICHD probe hierarchy.** Each probe entry is `{ text, kind }` where kind ∈ `{ open, cued, directive, option_posing }`. The Probe panel renders entries grouped by kind in hierarchy order (open → cued → directive → option_posing). Empty groups suppress their subhead. The option_posing group renders inside `.probe-group-option-posing` with an amber-rule subhead reading *"If the answer is still thin — option-posing carries suggestibility risk."* This is the pedagogy: the panel itself trains the interviewer in the hierarchy.
+- **`tagProbe()` heuristic IIFE** normalizes bare-string probes to `{ text, kind }` at module load. Priority order: cued patterns ("Tell me more" / "Help me understand") → option_posing yes/no openers (Was/Did/Could/Were/Are/Is/Have/etc.) → "or"-disjunction → bracketed `[echo]` cued → What/How/Why/Anything open → Who/Where/When/Which directive → fallthrough directive. Conservative tag wins on ambiguity. Pre-tagged objects (D-EMO-02, D-UTD-03) ship verbatim.
+- **`captureResponse` refactored to merge-aware.** Previously replaced the entry on every keystroke, which would have zeroed out BP2's `rephrase_count` / `probe_count`. Now: if entry exists → preserve provenance counters and `reliability_flags`, only update `value` + always-fresh provenance fields. Added `defaultProvenance()` (single source of truth for the shape) and `ensureResponse(id)` (init-if-absent helper used by Rephrase/Probe handlers before the textarea is touched).
+- **Rephrase panel** derives variants from `q.prompts[hs|ms|ue]` at open-time. Shows the two non-current bands. "Use this version" updates only the visible prompt text node (does NOT mutate global `currentBand`) and increments `provenance.rephrase_count` via `ensureResponse`. Per-question rephrase is a soft override — a subsequent global `setBand()` overwrites it (agreed behavior).
+- **Probe panel** — clicking "Used this probe" increments `provenance.probe_count` (via `ensureResponse`) and fades the item briefly. At `probe_count >= 3`, idempotently pushes `"suggestive_risk"` into `state.responses[<id>].reliability_flags` and appends a `.q-chip.suggestive-warn` chip ("Multi-probe") to the card's `q-header` with title/aria-label *"Multiple probes — review for suggestibility before using as evidence."*
+- **D-PEER reserved cards** (in `renderDPeerShell`) also get the three affordances. Info + Probe fall through to placeholder content; Rephrase renders its own placeholder ("Rephrase variants pending — D-PEER question content lands in Build Prompt 4") since `q.prompts` is absent until BP4. D-PEER cards now include empty `.q-tools` + a minimal `.q-routing` line as attachment scaffolding.
+- **CSS additions** scoped under `.icon-panel`: panel base style, `.placeholder` cream variant, `.probe-group-option-posing` (amber rule + heading color), `.rephrase-card`, `.probe-item` (with `.used` fade), `.q-chip.suggestive-warn` (background `#FFF8E5`, color `#7A6A2A`).
+
+**Verification artifacts:** runtime engine assertions for BP2 live at `/tmp/svp_test_probes.js` (Node `vm` module + stubbed browser globals). Pattern: extract the inline `<script>` block, sandbox-eval, then assert against `ICON_CONTENT`, `tagProbe`, `getIconContent`, `captureResponse`, `ensureResponse`, `FIELD_REGISTRY`, and `isFlagOn`. The BP2 PR description preserves the 62/62 pass-list as a checked-off acceptance record.
+
 **What's pending (Build Prompts to come):**
 
-- **BP2** — Three interviewer icons (Info / Rephrase / Probe Deeper)
-- **BP3** — Student scaffold cards for D-PHYS / D-EMO / D-ENV / D-UTD
-- **BP4** — D-PEER question content (HS / MS / UE prompts, NICHD type, routing)
-- **BP5** — Export schema (JSON + PDF)
+- **BP3** — Student scaffold cards for D-PHYS / D-EMO / D-ENV / D-UTD (will populate `provenance.tier_used` and `provenance.scaffold_viewed`)
+- **BP4** — D-PEER question content (HS / MS / UE prompts, NICHD type, routing). When this lands, refactor `renderDPeerShell`'s reserved cards to flow through `renderQuestion()` (so they pick up Listen/Record/Clear/textarea), and remove the Rephrase placeholder branch in `populateRephrasePanel`.
+- **BP5** — Export schema (JSON + PDF). Will serialize `reliability_flags` including `"suggestive_risk"` per BP2 contract.
 
 **Open ambiguity flagged for future BPs** (none blocking, but worth resolving when relevant):
 
-- D-PEER question types in BP4 — registry has `Inv./Inv./Dir.`; BP4 should sanity-check
+- BP3 may want to revisit whether `applyDomainConditionals()` should run on every state mutation (currently called on `whoPresent` change + load) — scaffold-card surfacing logic could need a similar hook
+- BP4 needs to author probe content for D-PEER-01/02/03 (placeholder entries already in `ICON_CONTENT`)
+- BP4 should sanity-check D-PEER question types — registry has `Inv./Inv./Dir.`
+- BP5 may need to author Info/probe content for D-BLG and D-RNT (or defer to a later research-bank synthesis pass §A.6 / §A.7 / §E.1 / §E.2)
 - D-CTX-04 hide-vs-disable choice — currently hidden when `iepStatus !== 'yes'`; alternative is "shown but inert"
 - Threat-pause UX richness — currently a passive pointer to the existing bar; could be richer
 - Repo rename when Manifesto rebrand finalizes (currently `guard-protocol-student-voice`)
@@ -142,6 +159,7 @@ Pattern: extract the inline `<script>` block containing `const DOMAINS`, evaluat
 - `CLAUDE.md` — this file
 - `student_voice_protocol_v4.html` — the entire application
 - `build-prompts/BUILD_PROMPT_1.md` — BP1 spec, archived alongside the implementation
+- `build-prompts/BUILD_PROMPT_2.md` — BP2 spec, archived alongside the implementation
 - `.gitignore` — keeps OS junk out of the repo
 
 ## Ground truth for the v4-aligned 9 domains + D-PEER
