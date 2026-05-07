@@ -119,6 +119,25 @@ tailwind.config = {
 
   .consent-banner { border:2px solid #78100b; background:#fff2f0; padding:1rem 1.25rem; font-family:"Public Sans",sans-serif; font-size:.85rem; }
 
+  /* BP2 — interviewer icon panels (Info / Rephrase / Probe) */
+  .icon-panel { border:2px solid #000; background:#FAFAF7; padding:14px 18px; margin-top:10px; }
+  .icon-panel h4 { font-family:"Newsreader",serif; font-weight:700; font-size:.95rem; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
+  .icon-panel h5 { font-family:"Public Sans",sans-serif; font-weight:800; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; margin-top:10px; margin-bottom:4px; color:#1b1c1a; }
+  .icon-panel p { font-size:.9rem; line-height:1.55; margin-bottom:6px; }
+  .icon-panel ul { font-size:.9rem; line-height:1.5; margin-top:6px; padding-left:18px; list-style:disc; }
+  .icon-panel li + li { margin-top:6px; }
+  .icon-panel .panel-meta { font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:#5A5A55; margin-top:10px; }
+  .icon-panel.placeholder { background:#FFF8E5; border-color:#7A6A2A; }
+  .icon-panel .probe-group-option-posing { border-top:1px solid #C8A93E; padding-top:8px; margin-top:10px; }
+  .icon-panel .probe-group-option-posing h5 { color:#7A6A2A; }
+  .icon-panel .rephrase-card { border:1px solid #000; padding:.75rem 1rem; margin-top:.6rem; background:#fff; }
+  .icon-panel .rephrase-card .band-tag { font-family:"Public Sans",sans-serif; font-size:.6rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; color:#78100b; margin-bottom:.25rem; }
+  .icon-panel .probe-item { display:flex; align-items:flex-start; gap:.75rem; }
+  .icon-panel .probe-item .probe-text { flex:1; }
+  .icon-panel .probe-item.used { opacity:.45; transition:opacity .25s; }
+  .icon-panel .panel-close { margin-top:10px; }
+  .q-chip.suggestive-warn { background:#FFF8E5; color:#7A6A2A; border:1px solid #7A6A2A; }
+
   @media print {
     body { background:#fff; color:#000; font-size:10pt; }
     header, aside, #reluctance-drawer, .drawer-btn, .threat-pause-bar, .no-print { display:none !important; }
@@ -1152,6 +1171,486 @@ const CONDITION_RULES = {
   },
 };
 
+// =========================================================================
+// BP2 — ICON_CONTENT data + NICHD probe taxonomy
+// =========================================================================
+//
+// Per-question authored content for the three interviewer icons. Probes
+// are written below as bare strings for readability; a tagging IIFE
+// converts them to { text, kind } where kind is one of:
+//   open / cued / directive / option_posing
+// per the NICHD invitational hierarchy. Pre-tagged objects (D-EMO-02,
+// D-UTD-03) are preserved verbatim. Suggestive probes do not ship under
+// any tag.
+
+const PLACEHOLDER_INFO = {
+  draft: true,
+  construct: 'Pending research synthesis',
+  placeholderNote: 'Detailed Info content for this conditional domain field will be authored after research synthesis (research-bank prompts §A.6, §A.7, §E.1, §E.2).',
+};
+const PLACEHOLDER_PROBES = [];
+
+const ICON_CONTENT = {
+  // ===== D-CTX (Context & Antecedents) =====
+  'D-CTX-01': {
+    info: {
+      construct: 'Temporal context — open narrative invitation',
+      why: 'Opening with an open invitation gives the student narrative authority and produces the highest-quality recall under NICHD evidence. The temporal frame anchors later questions in the student’s own sequence rather than the adult’s reconstruction.',
+      watchFor: 'Resist the urge to interrupt or compress the timeline. If the student loops back or jumps ahead, follow them — do not redirect to chronological order.',
+      research: ['NICHD Investigative Interview Protocol (Lamb et al., 2008)', 'Orbach et al. (2000) — narrative-rapport effect'],
+    },
+    probe: [
+      'Tell me more about that morning.',
+      'What happened next?',
+      'Help me understand what you mean by [echo a specific phrase].',
+      'What else?',
+    ],
+  },
+  'D-CTX-02': {
+    info: {
+      construct: 'Immediate antecedent — directive, narrow',
+      why: 'After the open narrative, narrow to the moments immediately preceding the incident. This isolates the proximal trigger without leading the student to a hypothesis.',
+      watchFor: 'Do not propose what the antecedent might have been. Let the student name it. Note who was present in their words, not yours.',
+      research: ['NICHD Protocol — directed sub-prompts after open invitation', 'FBA antecedent-behavior-consequence chain'],
+    },
+    probe: [
+      'Right before that, what was happening?',
+      'Who else was there?',
+      'What were they doing?',
+    ],
+  },
+  'D-CTX-03': {
+    info: {
+      construct: 'Instructions and expectations — clarity check',
+      why: 'If the student couldn’t access the expectation, the behavior may be a manifestation of unclear instruction rather than refusal. This is a high-signal modifiable setting event for FBA.',
+      watchFor: 'Listen for whether the student understood the task at all, not whether they "should have." Adultified students are over-attributed comprehension.',
+      research: ['Universal Design for Learning (CAST, 2024) — representation principles', 'IDEA: Adverse effect on educational performance'],
+    },
+    probe: [
+      'Were the instructions written, said out loud, or both?',
+      'Were you sure what was being asked?',
+      'Was anything confusing about the task?',
+    ],
+  },
+  'D-CTX-04': {
+    info: {
+      construct: 'IEP service delivery context — fidelity check',
+      why: 'Failure to deliver an IEP-mandated service at the time of the incident is a separate IDEA violation independent of any behavioral analysis. This question surfaces constructive removal patterns.',
+      watchFor: 'If the student says the service was missing, document verbatim. Do not soften. This may invoke 34 CFR §300.530(e)(1)(ii).',
+      research: ['IDEA §300.323(d) — IEP implementation', 'Endrew F. v. Douglas County (2017) — meaningful benefit standard'],
+    },
+    probe: [
+      'Was your [paraprofessional / co-teacher / accommodation] there?',
+      'Did you get [extended time / quiet space / movement break] when you needed it?',
+      'If not, what happened instead?',
+    ],
+  },
+  'D-CTX-05': {
+    info: {
+      construct: 'Perceived control — autonomy and agency',
+      why: 'Behavior under perceived coercion is qualitatively different from behavior under perceived choice. The student’s experience of agency is the relevant variable, not whether choice "objectively" existed.',
+      watchFor: 'Do not argue with the student’s experience. If they felt they had no choice, that is the data. Whether you agree with that perception is a separate question.',
+      research: ['Self-Determination Theory (Deci & Ryan, 2000)', 'Coercion-resistance literature in disability rights'],
+    },
+    probe: [
+      'Did it feel like you had to do it?',
+      'Was there anything else you felt you could have done?',
+      'What would have helped it feel like a choice?',
+    ],
+  },
+
+  // ===== D-PHYS (Physiological State) =====
+  'D-PHYS-01': {
+    info: {
+      construct: 'Pre-incident physiological baseline — interoception',
+      why: 'Polyvagal theory frames the body’s autonomic state as the substrate for behavior. Pre-incident physiology often reveals the student was already past their window of tolerance — meaning behavior was a survival response, not a choice.',
+      watchFor: 'Use Tier 1 vocabulary first (Mahler). Wait 10 seconds. If the student is silent, offer Tier 2 from the reference table — present as a menu, not a suggestion.',
+      research: ['Polyvagal Theory (Porges, 2011)', 'Mahler Interoception Curriculum (2017)'],
+    },
+    probe: [
+      'Tell me more about your body right then.',
+      'Was anything happening in your chest? Your stomach? Your hands?',
+      'What did your breathing feel like?',
+    ],
+  },
+  'D-PHYS-02': {
+    info: {
+      construct: 'Physiological changes during the incident — autonomic shift',
+      why: 'Documenting an autonomic shift (sympathetic activation, dorsal shutdown) provides direct evidence of dysregulation that bears on whether the behavior was within the student’s voluntary control at that moment.',
+      watchFor: 'If the student describes feeling "frozen" or "far away," that is dorsal shutdown — not defiance. Cool Pose and polyvagal freeze can look like "attitude" to an untrained adult.',
+      research: ['Porges (2011) — autonomic state taxonomy', 'Majors & Billson (1992) — Cool Pose'],
+    },
+    probe: [
+      'What changed in your body?',
+      'Did your body feel faster or slower?',
+      'Did you feel tight or loose? Hot or cold?',
+    ],
+  },
+  'D-PHYS-03': {
+    info: {
+      construct: 'Action impulses and regulation capacity — fight/flight/freeze',
+      why: 'Naming the urge separates the impulse from the action. A student who felt a flight urge but stayed is regulating; a student who acted on a fight urge was overwhelmed by it. Both data are relevant.',
+      watchFor: 'Avoid "why did you..." — that question framing assumes choice the student may not have had. Stay with the impulse, not the verdict.',
+      research: ['Polyvagal action systems', 'Siegel (1999) — window of tolerance'],
+    },
+    probe: [
+      'What did your body want to do?',
+      'Did part of you want to run or hide?',
+      'Did part of you want to push back or fight?',
+    ],
+  },
+  'D-PHYS-04': {
+    info: {
+      construct: 'Recovery timeline — autonomic regulation',
+      why: 'How long the dysregulation lasted predicts re-entry timing. Asking a student to engage in restoration before they have returned to ventral vagal capacity sets them up to fail.',
+      watchFor: 'If the student says they are still activated, re-entry conversations should wait. Document the timeline; flag for the team.',
+      research: ['Porges — co-regulation and ventral return', 'Trauma-informed re-entry literature'],
+    },
+    probe: [
+      'When did your body start to feel normal again?',
+      'Are you all the way back, or still a little wound up?',
+      'What helped your body settle?',
+    ],
+  },
+
+  // ===== D-EMO (Emotional State & Affect Regulation) =====
+  'D-EMO-01': {
+    info: {
+      construct: 'Emotional state pre-incident — granularity',
+      why: 'Affect granularity (the ability to name specific feelings) is a protective factor. Students with limited granularity may say "mad" for an emotion that was actually "overwhelmed" or "humiliated" — and the difference matters for FBA.',
+      watchFor: 'Don’t rush past "mad" or "fine." Offer Tier 2 vocabulary cards if the response is sparse. Do NOT propose specific feelings before the student names one.',
+      research: ['Barrett (2017) — emotion granularity', 'Mahler vocabulary tiers'],
+    },
+    probe: [
+      'What kind of [feeling word] was it?',
+      'Was it mostly inside you, or about something around you?',
+      'Did it feel like one thing or a few things mixed?',
+    ],
+  },
+  'D-EMO-02': {
+    info: {
+      construct: 'Emotional intensity — overwhelm threshold',
+      why: 'Intensity calibrates the team’s understanding of the student’s window of tolerance. A 9/10 emotion in a previously-calm student suggests a triggering event; a 9/10 in a chronically-activated student suggests an overflow.',
+      watchFor: 'Use the student’s own intensity scale if they offer one. Avoid forcing a 1–10 number on a student who prefers "small / medium / really big."',
+      research: ['Kuypers Zones of Regulation (2011)', 'Affect intensity research (Larsen & Diener, 1987)'],
+    },
+    probe: [
+      { text: 'How big did the feeling get?', kind: 'open' },
+      { text: 'How does it compare to other big feelings you’ve had?', kind: 'open' },
+      { text: 'Was it a small feeling or a big one?', kind: 'option_posing' },
+    ],
+  },
+  'D-EMO-03': {
+    info: {
+      construct: 'Emotional cognition during incident — amygdala dominance',
+      why: 'If the student couldn’t think clearly during the incident, prefrontal access was compromised. That is direct evidence relevant to manifestation analysis under IDEA — was the behavior a "choice" if the deciding part of the brain was offline?',
+      watchFor: '"I don’t know what I was thinking" is meaningful data, not evasion. Document it verbatim.',
+      research: ['LeDoux (1996) — amygdala hijack', 'Goleman (2005) — emotional intelligence under arousal'],
+    },
+    probe: [
+      'Could you think clearly?',
+      'Did your mind go fast, slow, or blank?',
+      'Did the feeling change while it was happening?',
+    ],
+  },
+  'D-EMO-04': {
+    info: {
+      construct: 'Shame and self-judgment — Critical Remorse Trap safeguard',
+      why: 'Absence of visible remorse is NOT evidence of willfulness. Flat affect, anger, and defensiveness are protective responses. Students with autism, ADHD, or trauma may have genuine difficulty accessing or expressing remorse even when they fully understand impact. Adultification bias amplifies this misread for Black students.',
+      watchFor: 'Do not score absence of remorse as non-manifestation. If the student is calm or angry rather than tearful, that is a regulation strategy, not evidence of cold intent.',
+      research: ['Goff et al. (2014) — adultification of Black children', 'Epstein et al. (2017) — Black girls’ adultification', 'v4 §D-EMO-04 Critical Remorse Trap Safeguard'],
+    },
+    probe: [
+      'How are you feeling about it now, talking about it?',
+      'Is it easier or harder to talk about now than it was right after?',
+      'Is there anything you wish people understood about how you feel?',
+    ],
+  },
+
+  // ===== D-ENV (Environmental Factors & Perceived Triggers) =====
+  'D-ENV-01': {
+    info: {
+      construct: 'Sensory and environmental contributors — accommodation needs',
+      why: 'Sensory overload is a setting event that often gets coded as defiance. Documenting the sensory environment surfaces modifiable accommodations the IEP or 504 team may not know are needed.',
+      watchFor: 'Loud, bright, crowded, unpredictable — name them as conditions, not as student weaknesses. Sensory profiles vary; the student’s account is the data.',
+      research: ['UDL Guidelines 3.0 (CAST, 2024) — variability principle', 'Sensory Processing Disorder literature (Miller, 2014)'],
+    },
+    probe: [
+      'Was the room loud?',
+      'Were the lights or movement bothering you?',
+      'Was anything happening that made it harder to focus?',
+    ],
+  },
+  'D-ENV-02': {
+    info: {
+      construct: 'Social-environmental factors — peer dynamics, belonging',
+      why: 'Peer-driven setting events (exclusion, ridicule, coercion) are systematically underweighted in adult-driven incident reports. The student’s account is often the only direct evidence of these dynamics.',
+      watchFor: 'If the student names peer dynamics, this should trigger the D-PEER mini-domain (Build Prompt 4). For now, capture verbatim.',
+      research: ['Walton & Cohen (2007, 2011) — belonging interventions', 'Yeager et al. (2016) — adolescent belonging effects'],
+    },
+    probe: [
+      'Were other kids saying or doing anything?',
+      'Did anyone leave you out?',
+      'Was anyone laughing at you or pushing you to do something?',
+    ],
+  },
+  'D-ENV-03': {
+    info: {
+      construct: 'Staff interaction & perceived respect — relationship quality',
+      why: 'Adult-student relationship quality at the moment of incident is a protective or perpetuating factor. A student who perceived disrespect from the adult in the moment will read identical adult interventions as escalation rather than co-regulation.',
+      watchFor: 'The student’s perception is the data. This is not a search for whether the staff member "actually" behaved disrespectfully.',
+      research: ['Pianta (1999) — student-teacher relationship quality', 'Hammond (2015) — Ready for Rigor frame: trust and rapport'],
+    },
+    probe: [
+      'How were the adults acting?',
+      'Did you feel listened to?',
+      'Did anything they did make it worse?',
+    ],
+  },
+  'D-ENV-04': {
+    info: {
+      construct: 'Changes to routine — unexpected transitions',
+      why: 'Unpredictability is a setting event for many disabilities (autism, anxiety, ADHD). A "small" schedule change for a neurotypical student can be a major destabilizer for a student with predictability needs.',
+      watchFor: 'Substitute teachers, fire drills, schedule shifts, visitors — name them. They rarely appear in adult incident reports because they "shouldn’t" have mattered.',
+      research: ['Volkmar et al. (2014) — autism and predictability', 'ADHD executive function literature'],
+    },
+    probe: [
+      'Was anything different about that day?',
+      'Did anything change unexpectedly?',
+      'Was there a substitute or someone new?',
+    ],
+  },
+
+  // ===== D-UTD (Understanding & Decision-Making) =====
+  'D-UTD-01': {
+    info: {
+      construct: 'Cognitive clarity during incident — prefrontal access',
+      why: 'If the student couldn’t think clearly, the behavior was less voluntary than it appeared. This is the IDEA manifestation question in concrete neurological terms.',
+      watchFor: 'Do not lead with "you knew what you were doing, right?" That is an interrogation question and produces compliance, not truth.',
+      research: ['Diamond (2013) — executive function development', 'Casey et al. (2008) — adolescent prefrontal-limbic balance'],
+    },
+    probe: [
+      'Could you think about what to do?',
+      'Did your brain feel fast or slow?',
+      'Did anything feel automatic?',
+    ],
+  },
+  'D-UTD-02': {
+    info: {
+      construct: 'Awareness of consequences — capacity vs. choice',
+      why: 'Knowing the rule is different from being able to apply it under arousal. Students with executive function impairments may KNOW the consequence and STILL be unable to inhibit. This is the knowledge-capacity dissociation.',
+      watchFor: 'If the student says "I knew I’d get in trouble," that is not a confession of voluntariness — it is awareness without inhibitory access.',
+      research: ['Barkley (2012) — ADHD and inhibition', 'Casey et al. — limbic override under arousal'],
+    },
+    probe: [
+      'Did you think about what would happen?',
+      'Could you stop yourself?',
+      'Did the part of you that wanted to stop feel loud or quiet?',
+    ],
+  },
+  'D-UTD-03': {
+    info: {
+      construct: 'Intentionality — volitional vs. impulsive',
+      why: 'Intent is the lay synonym for the technical question of voluntariness. Students often describe impulsive behavior as "just happening" — that linguistic frame is itself evidence.',
+      watchFor: '"I didn’t mean to" is data, not evasion. Capture verbatim. Do not interrogate.',
+      research: ['Anderson (2002) — prefrontal development and intentional control', 'ADHD impulse control literature'],
+    },
+    probe: [
+      { text: 'What did you want in that moment?', kind: 'open' },
+      { text: 'What were you hoping would happen?', kind: 'open' },
+      { text: 'Did you mean to, or did it just happen?', kind: 'option_posing' },
+    ],
+  },
+  'D-UTD-04': {
+    info: {
+      construct: 'Alternative behavior awareness — flexibility evidence',
+      why: 'Could the student see another option in the moment? If not, that’s behavioral inflexibility under arousal — a hallmark of dysregulation. If yes, why didn’t they pick it? That answer is the FBA gold mine.',
+      watchFor: 'If the student says "I didn’t think of anything else," do not coach replacement behaviors right now. Note it for BIP development.',
+      research: ['Cognitive flexibility literature (Diamond, 2013)', 'FBA replacement behavior protocol'],
+    },
+    probe: [
+      'Did you know other things you could have done?',
+      'Did anything else feel possible right then?',
+      'What would you try next time?',
+    ],
+  },
+
+  // ===== D-SAF (Safety Context) =====
+  'D-SAF-01': {
+    info: {
+      construct: 'Perceived threat — survival response evidence',
+      why: 'Perceived threat (subjective, not "objective") is what triggers autonomic survival responses. A student who felt unsafe was operating under threat physiology regardless of whether the adults thought there was "real" danger.',
+      watchFor: 'Use the existing leading-question safeguard from v4 (the Normalization-then-Ask pattern). Do not start with "were you scared?" — that assumes fear.',
+      research: ['Porges (2011) — neuroception', 'v4 §D-SAF Leading Question Self-Check'],
+    },
+    probe: [
+      'What did your body tell you about danger?',
+      'Did anything feel like you needed to protect yourself?',
+      'What were you watching for?',
+    ],
+  },
+  'D-SAF-02': {
+    info: {
+      construct: 'Normalization-then-ask — leading-question safeguard',
+      why: 'This question is itself a fidelity safeguard. Asking it is part of the protocol’s bias-mitigation architecture, not a separate construct.',
+      watchFor: 'Read the question verbatim. The normalization frame ("sometimes when people are overwhelmed...") is the safeguard. Don’t paraphrase.',
+      research: ['NICHD — leading question control', 'v4 §D-SAF protocol design'],
+    },
+    probe: [
+      'Did any of that fit?',
+      'Was yours different — and if so, how?',
+      'Tell me about what was true for you.',
+    ],
+  },
+  'D-SAF-03': {
+    info: {
+      construct: 'Access to trusted adults — support system',
+      why: 'Whether the student had a trusted adult to access in the moment is a protective factor and a system-design indicator. Settings without trusted-adult access are higher-risk settings, regardless of incident history.',
+      watchFor: 'If the student names no trusted adult, this is a flag for the team — not a deficit in the student.',
+      research: ['Rita Pierson — every kid needs a champion', 'Search Institute — Developmental Assets'],
+    },
+    probe: [
+      'Was there an adult you could have asked for help?',
+      'Did anyone feel safe enough to go to?',
+      'Why was it hard to ask?',
+    ],
+  },
+  'D-SAF-04': {
+    info: {
+      construct: 'Internal vs. external locus of safety — trust and autonomy',
+      why: 'When the student perceives that adults are not keeping them safe, they shift to self-protection. Behavior under self-protection looks "oppositional" but is actually adaptive. This distinction is central to manifestation analysis.',
+      watchFor: 'If the student says they had to protect themselves, treat that as a serious signal about systemic safety, not as defiance.',
+      research: ['Trauma-informed schools literature (Cole et al., 2005)', 'Adverse Childhood Experiences (Felitti et al., 1998)'],
+    },
+    probe: [
+      'Who was supposed to be keeping you safe?',
+      'Did you trust the adults to handle it?',
+      'Did you feel like you had to handle it yourself?',
+    ],
+  },
+
+  // ===== D-RPR (Repair & Restoration) =====
+  'D-RPR-01': {
+    info: {
+      construct: 'Repair capacity and willingness — voluntary, not required',
+      why: 'Repair offered is data. Repair refused is also data — it does NOT indicate non-manifestation. Students with autism may struggle with the social script of apology; students with trauma may protect themselves through anger.',
+      watchFor: 'Do not coach an apology. Do not require a repair statement to "count" as cooperation. Capture whatever the student offers, including "no."',
+      research: ['Restorative Justice in Schools (Zehr, 2002)', 'v4 §D-RPR Do Not Require Remorse safeguard'],
+    },
+    probe: [
+      'Is there anything you’d want to say to [person]?',
+      'Is there something you’d want them to know?',
+      'Is there something you’d want to be different next time?',
+    ],
+  },
+  'D-RPR-02': {
+    info: {
+      construct: 'Future safety and success conditions — student voice in BIP',
+      why: 'The student is the foremost expert on what will help them succeed. This input feeds BIP and IEP modifications directly. Adult-designed plans without student voice have low durability.',
+      watchFor: 'Specifics matter more than aspirations. "I want a different teacher" is actionable; "I want to do better" is platitude. Probe for concrete supports.',
+      research: ['Walton et al. (2021) — student voice in re-entry', 'PBIS individual support planning'],
+    },
+    probe: [
+      'What would help you feel okay at school?',
+      'Who would you want on your team?',
+      'What needs to change about the place or the people?',
+    ],
+  },
+  'D-RPR-03': {
+    info: {
+      construct: 'Closing — student voice catch-all',
+      why: 'Closing with a fully open invitation surfaces what no domain question reached. Students often place the most important data at the end, after they’ve decided you can be trusted with it.',
+      watchFor: 'Wait. Silence after this question is normal. Do not fill it with another question.',
+      research: ['NICHD Protocol — closing invitation', 'Trauma-informed interviewing literature'],
+    },
+    probe: [
+      'Anything I missed?',
+      'Anything I should have asked but didn’t?',
+      'What else matters that we haven’t talked about?',
+    ],
+  },
+
+  // ===== Conditional domains — placeholder until research synthesis =====
+  // D-BLG (5), D-RNT (4), D-PEER (3) = 12 placeholder entries.
+  'D-BLG-01': { info: PLACEHOLDER_INFO, probe: PLACEHOLDER_PROBES },
+  'D-BLG-02': { info: PLACEHOLDER_INFO, probe: PLACEHOLDER_PROBES },
+  'D-BLG-03': { info: PLACEHOLDER_INFO, probe: PLACEHOLDER_PROBES },
+  'D-BLG-04': { info: PLACEHOLDER_INFO, probe: PLACEHOLDER_PROBES },
+  'D-BLG-05': { info: PLACEHOLDER_INFO, probe: PLACEHOLDER_PROBES },
+  'D-RNT-01': { info: PLACEHOLDER_INFO, probe: PLACEHOLDER_PROBES },
+  'D-RNT-02': { info: PLACEHOLDER_INFO, probe: PLACEHOLDER_PROBES },
+  'D-RNT-03': { info: PLACEHOLDER_INFO, probe: PLACEHOLDER_PROBES },
+  'D-RNT-04': { info: PLACEHOLDER_INFO, probe: PLACEHOLDER_PROBES },
+  'D-PEER-01': { info: PLACEHOLDER_INFO, probe: PLACEHOLDER_PROBES },
+  'D-PEER-02': { info: PLACEHOLDER_INFO, probe: PLACEHOLDER_PROBES },
+  'D-PEER-03': { info: PLACEHOLDER_INFO, probe: PLACEHOLDER_PROBES },
+};
+
+// Heuristic tagger for bare-string probes. Applied at module load so the
+// rest of the app can assume every probe entry is the { text, kind } shape.
+// Pre-tagged objects pass through untouched. Order matters — the
+// "more conservative" tag wins when a probe could fit multiple kinds.
+function tagProbe(entry) {
+  if (entry == null) return null;
+  if (typeof entry === 'object' && entry.kind) return entry;
+  const text = typeof entry === 'string' ? entry : (entry.text || '');
+  if (!text) return { text: '', kind: 'directive' };
+
+  // Rule 1: explicit cued patterns ("Tell me more" / "Help me understand").
+  if (/^(Tell me more|Help me understand)\b/i.test(text)) {
+    return { text: text, kind: 'cued' };
+  }
+
+  // Rule 4 (checked before open/directive — option_posing dominates):
+  // yes/no openers and "or"-disjunction.
+  if (/^(Was|Were|Did|Do|Does|Could|Can|Would|Should|Will|Is|Are|Am|Has|Have|Had)\b/i.test(text)) {
+    return { text: text, kind: 'option_posing' };
+  }
+  // Embedded "X, Y, or Z" trinary or " or " binary disjunction in body.
+  if (/,\s*or\s+\w/i.test(text) || /\b\w+\s+or\s+\w+\s*\?/.test(text)) {
+    return { text: text, kind: 'option_posing' };
+  }
+
+  // Cued: contains a bracketed echo placeholder.
+  if (/\[[^\]]+\]/.test(text)) {
+    return { text: text, kind: 'cued' };
+  }
+
+  // Open: starts with What/How/Why/Anything, "Tell me about", or contains
+  // an open continuation.
+  if (/^(What|How|Why|Anything|Tell me about)\b/i.test(text)) {
+    return { text: text, kind: 'open' };
+  }
+  if (/\b(what|how|tell me about)\b/i.test(text)) {
+    return { text: text, kind: 'open' };
+  }
+
+  // Directive: neutral Who / Where / When / Which.
+  if (/^(Who|Where|When|Which)\b/i.test(text)) {
+    return { text: text, kind: 'directive' };
+  }
+
+  // Default fallthrough: directive (most conservative non-suggestive tag).
+  return { text: text, kind: 'directive' };
+}
+
+// Apply tagger to every ICON_CONTENT entry once at module load.
+(function normalizeIconContent() {
+  for (const fid of Object.keys(ICON_CONTENT)) {
+    const entry = ICON_CONTENT[fid];
+    if (!entry || !Array.isArray(entry.probe)) continue;
+    entry.probe = entry.probe.map(tagProbe).filter(p => p != null);
+  }
+})();
+
+// Lookup helper: returns the authored entry, or a placeholder fallback.
+// Probe panel/Info panel render placeholder variant when info.draft is true.
+function getIconContent(fieldId) {
+  const entry = ICON_CONTENT[fieldId];
+  if (entry) return entry;
+  return { info: PLACEHOLDER_INFO, probe: PLACEHOLDER_PROBES };
+}
+
 // ---- engine helpers ----
 function uuid() {
   if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
@@ -1274,28 +1773,60 @@ function gradeToAgeBand(grade) {
   return 'hs';
 }
 
-// Wrap an answer value into the provenance shape and write into state.responses.
-// Existing answers/notes capture path remains intact; this writes alongside.
+// Default provenance shape for a newly-initialized response entry.
+// Centralized so BP2+ helpers (ensureResponse, capture, icon handlers) stay aligned.
+function defaultProvenance() {
+  return {
+    age_band: state.profile.ageBand || currentBand,
+    tier_used: null,
+    scaffold_viewed: false,
+    rephrase_count: 0,
+    probe_count: 0,
+    response_source: 'student_voice',
+    language: 'en-US',
+    duration_seconds: null,
+    regulation_observation: null,
+    prompt_version: 'v1.0.0',
+    purpose: state.interview.purpose,
+    setting: state.incident.setting,
+    timestamp_utc: new Date().toISOString(),
+  };
+}
+
+// Initialize state.responses[fieldId] if absent without mutating an existing entry.
+// BP2 icon handlers (Rephrase / Probe) use this so they can increment provenance
+// counters even before the textarea has been touched.
+function ensureResponse(fieldId) {
+  if (!state.responses[fieldId]) {
+    state.responses[fieldId] = {
+      value: '',
+      provenance: defaultProvenance(),
+      reliability_flags: [],
+    };
+  }
+  return state.responses[fieldId];
+}
+
+// Merge-aware capture. BP1 originally replaced the entry on every keystroke,
+// which would zero out provenance counters bumped by BP2's Rephrase/Probe
+// handlers. BP2 refactor: preserve existing provenance counters and
+// reliability_flags; update value + the always-fresh provenance fields.
 function captureResponse(fieldId, value) {
+  const existing = state.responses[fieldId];
+  if (existing) {
+    existing.value = value;
+    existing.provenance.timestamp_utc = new Date().toISOString();
+    existing.provenance.age_band = state.profile.ageBand || currentBand;
+    existing.provenance.purpose = state.interview.purpose;
+    existing.provenance.setting = state.incident.setting;
+    return existing;
+  }
   state.responses[fieldId] = {
     value: value,
-    provenance: {
-      age_band: state.profile.ageBand || currentBand,
-      tier_used: null,
-      scaffold_viewed: false,
-      rephrase_count: 0,
-      probe_count: 0,
-      response_source: 'student_voice',
-      language: 'en-US',
-      duration_seconds: null,
-      regulation_observation: null,
-      prompt_version: 'v1.0.0',
-      purpose: state.interview.purpose,
-      setting: state.incident.setting,
-      timestamp_utc: new Date().toISOString(),
-    },
+    provenance: defaultProvenance(),
     reliability_flags: [],
   };
+  return state.responses[fieldId];
 }
 
 // ---- tiny DOM helper (no innerHTML anywhere) ----
@@ -1510,6 +2041,288 @@ function renderDomain(d) {
   return section;
 }
 
+// =========================================================================
+// BP2 — icon affordance helpers (Info / Rephrase / Probe per question card)
+// =========================================================================
+//
+// One panel can be open at a time across the whole interview. Opening a
+// new panel anywhere closes whichever was open. Panels live inside the
+// .question-card after .q-routing per BP2 §2 (sibling of routing line).
+
+let currentlyOpenPanelId = null;
+
+function closeAllPanels() {
+  if (!currentlyOpenPanelId) return;
+  const panel = document.getElementById(currentlyOpenPanelId);
+  if (panel) {
+    panel.hidden = true;
+    panel.setAttribute('aria-hidden', 'true');
+  }
+  document.querySelectorAll('[data-icon-trigger="true"]').forEach(btn => {
+    btn.setAttribute('aria-expanded', 'false');
+  });
+  currentlyOpenPanelId = null;
+}
+
+function openPanel(panel, triggerBtn, populateFn) {
+  if (currentlyOpenPanelId === panel.id) {
+    closeAllPanels();
+    return;
+  }
+  closeAllPanels();
+  if (typeof populateFn === 'function') populateFn(panel);
+  panel.hidden = false;
+  panel.setAttribute('aria-hidden', 'false');
+  triggerBtn.setAttribute('aria-expanded', 'true');
+  currentlyOpenPanelId = panel.id;
+}
+
+function makeIconPanelCloseButton() {
+  const btn = h('button', { class: 'btn-ghost panel-close no-print', type: 'button', 'aria-label': 'Close panel' });
+  btn.appendChild(icon('close', 16));
+  btn.appendChild(document.createTextNode(' Close'));
+  btn.addEventListener('click', () => closeAllPanels());
+  return btn;
+}
+
+function bandLabel(band) {
+  return band === 'hs' ? 'High School (HS)' : band === 'ms' ? 'Middle School (MS)' : 'Upper Elementary (UE)';
+}
+
+// ---- Info panel ----
+function populateInfoPanel(panel, fieldId) {
+  clear(panel);
+  panel.classList.remove('placeholder');
+  const content = getIconContent(fieldId);
+  const info = content.info || PLACEHOLDER_INFO;
+  panel.appendChild(h('h4', null, 'Why am I asking this?'));
+
+  if (info.draft === true) {
+    panel.classList.add('placeholder');
+    panel.appendChild(h('p', { class: 'panel-meta' }, 'Placeholder content'));
+    panel.appendChild(h('p', null, info.placeholderNote || PLACEHOLDER_INFO.placeholderNote));
+  } else {
+    if (info.construct) panel.appendChild(h('p', { style: 'font-weight:700;' }, info.construct));
+    if (info.why) panel.appendChild(h('p', null, info.why));
+    if (info.watchFor) {
+      const watch = h('p', null);
+      watch.appendChild(h('strong', null, 'Watch for: '));
+      watch.appendChild(document.createTextNode(info.watchFor));
+      panel.appendChild(watch);
+    }
+    if (Array.isArray(info.research) && info.research.length > 0) {
+      panel.appendChild(h('h5', null, 'Research basis'));
+      const ul = h('ul');
+      info.research.forEach(r => ul.appendChild(h('li', null, r)));
+      panel.appendChild(ul);
+    }
+  }
+  panel.appendChild(makeIconPanelCloseButton());
+}
+
+// ---- Rephrase panel ----
+function populateRephrasePanel(panel, fieldId, q, promptNode) {
+  clear(panel);
+  panel.classList.remove('placeholder');
+  panel.appendChild(h('h4', null, 'Ask it another way'));
+
+  const hasPrompts = q && q.prompts && q.prompts.hs && q.prompts.ms && q.prompts.ue;
+  if (!hasPrompts) {
+    // Placeholder for D-PEER reserved cards (prompts authored in BP4).
+    panel.classList.add('placeholder');
+    panel.appendChild(h('p', { class: 'panel-meta' }, 'Placeholder content'));
+    panel.appendChild(h('p', null, 'Rephrase variants pending — D-PEER question content lands in Build Prompt 4.'));
+    panel.appendChild(makeIconPanelCloseButton());
+    return;
+  }
+
+  panel.appendChild(h('p', null, 'If the student didn’t engage, try a different developmental band. Do not compound — pick one and use it whole.'));
+
+  const otherBands = ['hs', 'ms', 'ue'].filter(b => b !== currentBand);
+  otherBands.forEach(band => {
+    const card = h('div', { class: 'rephrase-card' });
+    card.appendChild(h('div', { class: 'band-tag' }, bandLabel(band)));
+    card.appendChild(h('p', { style: 'font-style:italic;' }, q.prompts[band]));
+    const useBtn = h('button', { class: 'btn-secondary', type: 'button', style: 'margin-top:.5rem;font-size:.65rem;padding:.4rem .9rem;' }, 'Use this version');
+    useBtn.addEventListener('click', () => {
+      // Per-question rephrase: update only the visible prompt node;
+      // do NOT mutate the global currentBand.
+      if (promptNode) promptNode.textContent = q.prompts[band];
+      const entry = ensureResponse(fieldId);
+      entry.provenance.rephrase_count = (entry.provenance.rephrase_count || 0) + 1;
+      closeAllPanels();
+    });
+    card.appendChild(useBtn);
+    panel.appendChild(card);
+  });
+  panel.appendChild(makeIconPanelCloseButton());
+}
+
+// ---- Probe panel ----
+const PROBE_GROUP_ORDER = [
+  { kind: 'open', subhead: 'Open invitations (highest quality).' },
+  { kind: 'cued', subhead: 'Cued (echo the student’s own language).' },
+  { kind: 'directive', subhead: 'Directive (specific factual question).' },
+  { kind: 'option_posing', subhead: 'If the answer is still thin — option-posing carries suggestibility risk.' },
+];
+
+function populateProbePanel(panel, fieldId, card) {
+  clear(panel);
+  panel.classList.remove('placeholder');
+  panel.appendChild(h('h4', null, 'Probe deeper — NICHD invitational hierarchy'));
+
+  const content = getIconContent(fieldId);
+  const probes = Array.isArray(content.probe) ? content.probe : [];
+
+  if (probes.length === 0) {
+    panel.classList.add('placeholder');
+    panel.appendChild(h('p', { class: 'panel-meta' }, 'Placeholder content'));
+    panel.appendChild(h('p', null, 'Probes pending research synthesis — content for this conditional domain field will be authored in a later build (research-bank §A.6, §A.7, §E.1, §E.2).'));
+    panel.appendChild(makeIconPanelCloseButton());
+    return;
+  }
+
+  panel.appendChild(h('p', null, 'Try open invitations first. Pick one. Never compound. Echo the student’s own words when possible.'));
+
+  PROBE_GROUP_ORDER.forEach(group => {
+    const items = probes.filter(p => p.kind === group.kind);
+    if (items.length === 0) return; // empty groups suppress subhead
+
+    const groupWrap = h('div', { class: group.kind === 'option_posing' ? 'probe-group-option-posing' : '' });
+    groupWrap.appendChild(h('h5', null, group.subhead));
+
+    const ul = h('ul');
+    items.forEach(p => {
+      const li = h('li', { class: 'probe-item' });
+      li.appendChild(h('span', { class: 'probe-text' }, p.text));
+      const useBtn = h('button', { class: 'btn-ghost', type: 'button', style: 'font-size:.55rem;padding:.25rem .55rem;' }, 'Used this probe');
+      useBtn.addEventListener('click', () => {
+        const entry = ensureResponse(fieldId);
+        entry.provenance.probe_count = (entry.provenance.probe_count || 0) + 1;
+        if (entry.provenance.probe_count >= 3) {
+          if (!Array.isArray(entry.reliability_flags)) entry.reliability_flags = [];
+          if (!entry.reliability_flags.includes('suggestive_risk')) {
+            entry.reliability_flags.push('suggestive_risk');
+          }
+          ensureSuggestiveWarnChip(card);
+        }
+        li.classList.add('used');
+        setTimeout(() => li.classList.remove('used'), 600);
+      });
+      li.appendChild(useBtn);
+      ul.appendChild(li);
+    });
+    groupWrap.appendChild(ul);
+    panel.appendChild(groupWrap);
+  });
+
+  panel.appendChild(h('p', { class: 'panel-meta' }, 'When the student offers nothing further, accept the silence. “I don’t know” is data.'));
+  panel.appendChild(makeIconPanelCloseButton());
+}
+
+function ensureSuggestiveWarnChip(card) {
+  if (!card) return;
+  if (card.querySelector('.q-chip.suggestive-warn')) return;
+  const header = card.querySelector('.q-header');
+  if (!header) return;
+  const chip = h('span', {
+    class: 'q-chip suggestive-warn no-print',
+    title: 'Multiple probes — review for suggestibility before using as evidence.',
+    'aria-label': 'Multiple probes — review for suggestibility before using as evidence.',
+  }, 'Multi-probe');
+  header.appendChild(chip);
+}
+
+// Build the three trigger buttons + panels for a question card. Caller
+// passes the card, an object with at least { id, prompts? }, and the
+// prompt node whose textContent the Rephrase panel updates.
+function attachIconAffordances(card, q, promptNode) {
+  const fieldId = q.id;
+  const tools = card.querySelector('.q-tools');
+  if (!tools) return;
+
+  const infoPanelId = 'panel-info-' + fieldId;
+  const rephrasePanelId = 'panel-rephrase-' + fieldId;
+  const probePanelId = 'panel-probe-' + fieldId;
+
+  const infoBtn = h('button', {
+    class: 'btn-ghost no-print',
+    type: 'button',
+    'aria-expanded': 'false',
+    'aria-controls': infoPanelId,
+    'data-icon-trigger': 'true',
+    title: 'Why am I asking?',
+    'aria-label': 'Why am I asking?',
+  });
+  infoBtn.appendChild(icon('info', 16));
+  infoBtn.appendChild(document.createTextNode(' Why am I asking?'));
+  tools.appendChild(infoBtn);
+
+  const rephraseBtn = h('button', {
+    class: 'btn-ghost no-print',
+    type: 'button',
+    'aria-expanded': 'false',
+    'aria-controls': rephrasePanelId,
+    'data-icon-trigger': 'true',
+    title: 'Ask it another way',
+    'aria-label': 'Ask it another way',
+  });
+  rephraseBtn.appendChild(icon('autorenew', 16));
+  rephraseBtn.appendChild(document.createTextNode(' Ask it another way'));
+  tools.appendChild(rephraseBtn);
+
+  const probeBtn = h('button', {
+    class: 'btn-ghost no-print',
+    type: 'button',
+    'aria-expanded': 'false',
+    'aria-controls': probePanelId,
+    'data-icon-trigger': 'true',
+    title: 'Probe deeper',
+    'aria-label': 'Probe deeper',
+  });
+  probeBtn.appendChild(icon('psychology_alt', 16));
+  probeBtn.appendChild(document.createTextNode(' Probe deeper'));
+  tools.appendChild(probeBtn);
+
+  const infoPanel = h('div', {
+    class: 'icon-panel info-panel no-print',
+    id: infoPanelId,
+    role: 'region',
+    'aria-label': 'Why am I asking this?',
+    hidden: true,
+    'aria-hidden': 'true',
+  });
+  const rephrasePanel = h('div', {
+    class: 'icon-panel rephrase-panel no-print',
+    id: rephrasePanelId,
+    role: 'region',
+    'aria-label': 'Ask it another way',
+    hidden: true,
+    'aria-hidden': 'true',
+  });
+  const probePanel = h('div', {
+    class: 'icon-panel probe-panel no-print',
+    id: probePanelId,
+    role: 'region',
+    'aria-label': 'Probe deeper — NICHD invitational hierarchy',
+    hidden: true,
+    'aria-hidden': 'true',
+  });
+  card.appendChild(infoPanel);
+  card.appendChild(rephrasePanel);
+  card.appendChild(probePanel);
+
+  infoBtn.addEventListener('click', () => {
+    openPanel(infoPanel, infoBtn, p => populateInfoPanel(p, fieldId));
+  });
+  rephraseBtn.addEventListener('click', () => {
+    openPanel(rephrasePanel, rephraseBtn, p => populateRephrasePanel(p, fieldId, q, promptNode));
+  });
+  probeBtn.addEventListener('click', () => {
+    openPanel(probePanel, probeBtn, p => populateProbePanel(p, fieldId, card));
+  });
+}
+
 function renderQuestion(q) {
   const card = h('div', { class: 'question-card' + (q.equityGate ? ' equity-gate' : ''), 'data-question-id': q.id });
 
@@ -1552,6 +2365,10 @@ function renderQuestion(q) {
   clearBtn.addEventListener('click', () => { ta.value = ''; answers[q.id] = ''; captureResponse(q.id, ''); });
 
   card.appendChild(h('div', { class: 'q-routing' }, 'Routes to → ' + q.routing));
+
+  // BP2 — three interviewer affordances (Info / Rephrase / Probe).
+  attachIconAffordances(card, q, prompt);
+
   return card;
 }
 
@@ -2258,7 +3075,10 @@ function renderDPeerShell() {
     'Conditional — surfaces when peers were present',
     'Three reserved field IDs (D-PEER-01 Peer Coercion / Pressure, D-PEER-02 Peer Ridicule / Humiliation, D-PEER-03 Bystander Dynamics) are in the registry. NICHD-aligned, age-banded question content is authored in Build Prompt 4.'
   ));
-  // Reserved-IDs preview — read-only, no inputs.
+  // Reserved-IDs preview — read-only, no inputs. BP2 attaches the three
+  // interviewer-icon affordances; Info/Probe render the placeholder
+  // variant (D-BLG/D-RNT/D-PEER fall through to PLACEHOLDER_INFO/PROBES),
+  // and Rephrase renders its own placeholder since q.prompts is absent.
   ['D-PEER-01','D-PEER-02','D-PEER-03'].forEach(fid => {
     const reg = FIELD_REGISTRY[fid];
     if (!reg) return;
@@ -2269,7 +3089,16 @@ function renderDPeerShell() {
     head.appendChild(h('span', { class: chipClass }, reg.qtype));
     head.appendChild(h('span', { class: 'text-[.6rem] uppercase tracking-widest text-ink-soft italic' }, '· content in BP4'));
     card.appendChild(head);
-    card.appendChild(h('p', { class: 'q-prompt italic text-ink-soft' }, 'Question content reserved — to be authored in Build Prompt 4.'));
+    const promptP = h('p', { class: 'q-prompt italic text-ink-soft' }, 'Question content reserved — to be authored in Build Prompt 4.');
+    card.appendChild(promptP);
+
+    // Empty .q-tools so attachIconAffordances has a target. No Listen/
+    // Record/Clear here — those tools require q.prompts and a textarea
+    // that BP4 will introduce.
+    card.appendChild(h('div', { class: 'q-tools' }));
+    card.appendChild(h('div', { class: 'q-routing' }, 'Routes to → Peer dynamics analysis (BP4)'));
+
+    attachIconAffordances(card, { id: fid }, promptP);
     body.appendChild(card);
   });
 
