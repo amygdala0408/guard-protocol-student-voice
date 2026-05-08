@@ -610,6 +610,17 @@ tailwind.config = {
         <div class="mt-3"><label>Reasoning</label><textarea id="reliability-reason" rows="2"></textarea></div>
       </section>
 
+      <!-- EXPORT EVIDENCE RECORD (BP5) -->
+      <section class="mt-12 border-2 border-black bg-white p-8 no-print" id="export-panel">
+        <h2 class="font-headline text-3xl font-bold mb-2">Export evidence record</h2>
+        <p class="text-sm italic text-ink-soft mb-5">Generates the structured evidence record for this interview. Reliability flags travel with each captured field. The export does not contain a determination — it organizes evidence for team review.</p>
+        <div class="flex flex-wrap gap-3">
+          <button class="btn-primary" type="button" id="export-download-json"><span class="material-symbols-outlined align-middle mr-1" style="font-size:16px;">download</span>Download JSON</button>
+          <button class="btn-secondary" type="button" id="export-generate-pdf"><span class="material-symbols-outlined align-middle mr-1" style="font-size:16px;">print</span>Generate PDF</button>
+        </div>
+        <p class="text-[.7rem] uppercase tracking-widest text-ink-soft mt-4" id="export-status"></p>
+      </section>
+
       <!-- FOOTER ACTION -->
       <div class="mt-20 pt-10 border-t-4 border-black flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div class="flex flex-col">
@@ -1696,10 +1707,16 @@ function isFlagOn(ruleKey) {
   return evaluateConditions(state, CONDITION_RULES[ruleKey]);
 }
 
+// ---- BP5 — single source of truth for export schema version ----
+// Used by initState below AND by buildExportPayload (JSON + PDF). Locks at
+// 1.0.0 after the Manifesto v2 team answers the open questions in
+// 04_EVIDENCE_MAPPING_STARTER.md Part 6.
+const EXPORT_SCHEMA_VERSION = '0.9.0-beta';
+
 // ---- state ----
 function initState() {
   return {
-    schema_version: '0.9.0-beta',
+    schema_version: EXPORT_SCHEMA_VERSION,
     framework: 'Manifesto',
     tool: 'Student Voice Protocol — Appendix D',
     interview_id: uuid(),
@@ -1827,6 +1844,342 @@ function captureResponse(fieldId, value) {
     reliability_flags: [],
   };
   return state.responses[fieldId];
+}
+
+// =========================================================================
+// BP5 — Export schema (JSON + PDF) · single source of truth
+// =========================================================================
+// buildExportPayload(state) is the canonical export shape. The JSON
+// download path serializes it. The PDF print path renders sections
+// computed from it. Both surfaces read from the SAME function so they
+// never drift. The export does not produce a determination — it
+// organizes evidence for team review.
+
+// Field-ID lists for the MDR-specific PDF sections (Section 7).
+// JSON output already contains all data via buildDomainsBlock; these lists
+// are used only by the print-path renderer to surface §300.530(e) prongs.
+const MDR_SECTION_A_FIELDS = [
+  'D-PHYS-01','D-PHYS-02','D-PHYS-03',
+  'D-EMO-01','D-EMO-02','D-EMO-03','D-EMO-04',
+  'D-UTD-01','D-UTD-02','D-UTD-03','D-UTD-04',
+  'D-CTX-01','D-CTX-02','D-CTX-05',
+  'D-ENV-01','D-ENV-02',
+];
+const MDR_SECTION_B_FIELDS = ['D-CTX-04','D-CTX-03','D-ENV-03','D-SAF-03'];
+
+// Universal-purpose PDF section field lists (Section 8).
+const UNIVERSAL_CLIMATE_FIELDS = [
+  'D-BLG-01','D-BLG-02','D-BLG-03','D-BLG-04','D-BLG-05',
+  'D-ENV-01','D-ENV-02','D-ENV-03','D-ENV-04',
+];
+const UNIVERSAL_RESTORATIVE_FIELDS = ['D-RPR-01','D-RPR-02','D-RPR-03'];
+
+// Verbatim disclaimer banner — calibrated for legal protection against
+// decision-replacement creep. Ships verbatim per BP5 Section 10.
+const PDF_DISCLAIMER_BANNER_TEXT = [
+  'This is not a Manifestation Determination.',
+  'The information captured in this interview is "relevant information" under 34 CFR §300.530(e). The determination of whether the conduct was caused by, or had a direct and substantial relationship to, the student’s disability, or was the direct result of failure to implement the IEP, must be made by a team of qualified professionals — including the parent or guardian.',
+  'Reliability flags travel with each captured field. Review them before any captured response is treated as evidence.',
+  'Person-first language is preserved throughout. Data retention and FERPA handling per district policy.',
+];
+
+// Research-basis citations (Section 10) — MDR variant ships verbatim;
+// Universal variant drops adultification + MDR-specific references and
+// emphasizes climate / belonging research.
+const PDF_CITATIONS_MDR = 'Research basis: NICHD Investigative Interview Protocol (Lamb et al., 2008); Polyvagal Theory (Porges, 2011); Mahler Interoception Curriculum (2017); Hidden profile research (Stasser & Titus, 1985; Stasser & Stewart, 1992); Cognitive bias in facilitated debriefing (Meguerdichian et al., 2024); Adultification bias (Goff et al., 2014; Epstein et al., 2017); UDL Guidelines 3.0 (CAST, 2024); Hammond — Culturally Responsive Teaching and the Brain (2015); MDR Facilitator Cross-Domain Synthesis (2026); MTSS/PBIS Student Data Collection Gaps Inventory (2026).';
+const PDF_CITATIONS_UNIVERSAL = 'Research basis: NICHD Investigative Interview Protocol (Lamb et al., 2008); Polyvagal Theory (Porges, 2011); Mahler Interoception Curriculum (2017); UDL Guidelines 3.0 (CAST, 2024); Hammond — Culturally Responsive Teaching and the Brain (2015); Hidden profile research (Stasser & Titus, 1985; Stasser & Stewart, 1992); PBIS school-climate research base; MTSS/PBIS Student Data Collection Gaps Inventory (2026).';
+
+// Critical Remorse Trap inline note (rendered alongside D-EMO-04 in
+// Section A). Adultification bias disproportionately affects Black
+// children's evaluation of remorse and intent; the safeguard surfaces
+// the bias risk regardless of demographic capture, since the SVP does
+// not collect ethnicity.
+const REMORSE_TRAP_NOTE = 'Critical Remorse Trap safeguard — adultification bias (Goff et al., 2014; Epstein et al., 2017) disproportionately affects Black children’s evaluation of remorse and intent. Apparent absence of remorse, flat affect, and "cool pose" are NOT evidence against manifestation.';
+
+// ---- helpers used by buildExportPayload ----
+function lookupPurposeLabel(id) {
+  if (!id) return null;
+  const p = INTERVIEW_PURPOSES.find(x => x.id === id);
+  return p ? p.label : null;
+}
+
+function lookupSettingLabel(id) {
+  if (!id) return null;
+  const s = SETTINGS.find(x => x.id === id);
+  return s ? s.label : id;
+}
+
+// For purpose === 'universal', returns a de-identified profile (strips
+// name, dob, primaryLanguage; keeps grade, ageBand; converts radio
+// statuses to boolean presence flags). For mdr and all other purposes,
+// returns the full profile.
+function redactProfileForPurpose(profile, purpose) {
+  const p = profile || {};
+  if (purpose === 'universal') {
+    return {
+      name: null,
+      dob: null,
+      primaryLanguage: null,
+      grade: p.grade || null,
+      ageBand: p.ageBand || null,
+      iepStatus_present: p.iepStatus === 'yes',
+      section504Status_present: p.section504Status === 'yes',
+      ellStatus_present: p.ellStatus === 'yes',
+      aacUser: !!p.aacUser,
+      aslUser: !!p.aslUser,
+      disabilityCategories: [],
+    };
+  }
+  return {
+    name: p.name || null,
+    dob: p.dob || null,
+    grade: p.grade || null,
+    ageBand: p.ageBand || null,
+    iepStatus: p.iepStatus || null,
+    section504Status: p.section504Status || null,
+    ellStatus: p.ellStatus || null,
+    primaryLanguage: p.primaryLanguage || null,
+    aacUser: !!p.aacUser,
+    aslUser: !!p.aslUser,
+    disabilityCategories: Array.isArray(p.disabilityCategories) ? p.disabilityCategories.slice() : [],
+  };
+}
+
+// 5 Ps membership for a given field. A field can route to multiple Ps;
+// we reflect FIVE_PS exactly — never invent routings.
+function fivePsForField(fid) {
+  const ps = [];
+  for (const p of Object.keys(FIVE_PS)) {
+    if (FIVE_PS[p].indexOf(fid) !== -1) ps.push(p);
+  }
+  return ps;
+}
+
+// True iff the response has a non-empty captured value.
+function isCaptured(r) {
+  return !!(r && r.value != null && String(r.value).trim() !== '');
+}
+
+// Build a single response entry for the JSON domains block. Unanswered
+// fields appear with value: null and provenance: null so downstream
+// consumers can distinguish "not asked" from "asked but no response."
+function buildResponseEntry(fid, reg) {
+  const r = state.responses[fid];
+  const captured = isCaptured(r);
+  return {
+    field_id: fid,
+    field_label: reg.label,
+    qtype: reg.qtype,
+    value: captured ? r.value : null,
+    provenance: captured ? r.provenance : null,
+    reliability_flags: captured && Array.isArray(r.reliability_flags) ? r.reliability_flags.slice() : [],
+    five_ps_routing: fivePsForField(fid),
+  };
+}
+
+// Build the domains block keyed by domain ID. Includes all 9 DOMAINS
+// entries plus D-PEER (which lives only in FIELD_REGISTRY until BP4).
+function buildDomainsBlock() {
+  const out = {};
+  for (const d of DOMAINS) {
+    let was_surfaced = true;
+    let conditional_basis = null;
+    if (!d.mandatory) {
+      const ruleKey = 'domain.' + d.id + '.visible';
+      if (CONDITION_RULES[ruleKey]) {
+        const ok = isFlagOn(ruleKey);
+        was_surfaced = !!ok;
+        if (!ok) conditional_basis = ruleKey;
+      }
+    }
+    const responses = d.questions.map(q => {
+      const reg = FIELD_REGISTRY[q.id] || { label: q.label, qtype: q.qtype };
+      return buildResponseEntry(q.id, reg);
+    });
+    out[d.id] = {
+      domain_id: d.id,
+      domain_title: d.title,
+      was_surfaced: was_surfaced,
+      conditional_basis: conditional_basis,
+      responses: responses,
+    };
+  }
+  // D-PEER (mini-domain reserved in FIELD_REGISTRY; content lands BP4)
+  const peerRule = 'domain.D-PEER.visible';
+  const peerSurfaced = isFlagOn(peerRule);
+  const peerResponses = ['D-PEER-01','D-PEER-02','D-PEER-03']
+    .map(fid => FIELD_REGISTRY[fid] ? buildResponseEntry(fid, FIELD_REGISTRY[fid]) : null)
+    .filter(Boolean);
+  out['D-PEER'] = {
+    domain_id: 'D-PEER',
+    domain_title: 'Peer Dynamics',
+    was_surfaced: !!peerSurfaced,
+    conditional_basis: peerSurfaced ? null : peerRule,
+    responses: peerResponses,
+  };
+  return out;
+}
+
+// 5 Ps clinical formulation routing — reads FIVE_PS exactly. Includes
+// only captured (non-empty) responses.
+function buildFivePsBlock() {
+  const out = {};
+  for (const p of Object.keys(FIVE_PS)) {
+    const arr = [];
+    for (const fid of FIVE_PS[p]) {
+      const reg = FIELD_REGISTRY[fid];
+      if (!reg) continue;
+      const r = state.responses[fid];
+      if (!isCaptured(r)) continue;
+      arr.push({
+        field_id: fid,
+        field_label: reg.label,
+        value: r.value,
+        reliability_flags: Array.isArray(r.reliability_flags) ? r.reliability_flags.slice() : [],
+      });
+    }
+    out[p] = arr;
+  }
+  return out;
+}
+
+// Interviewer fidelity metadata. Aggregates over the FIELD_REGISTRY
+// universe so unanswered fields are counted in total_fields_unanswered.
+function buildQualitySummary() {
+  const responses = state.responses || {};
+  let captured = 0, unanswered = 0, rephrase = 0, probe = 0;
+  let suggestive = 0, dysreg = 0, interpreter = 0, aac = 0;
+  const tier = { tier1: 0, tier2: 0, tier3: 0, none: 0 };
+  const allIds = Object.keys(FIELD_REGISTRY);
+  for (const fid of allIds) {
+    const r = responses[fid];
+    if (isCaptured(r)) {
+      captured++;
+      const p = r.provenance || {};
+      rephrase += (p.rephrase_count || 0);
+      probe += (p.probe_count || 0);
+      if (p.regulation_observation === 'red') dysreg++;
+      if (p.response_source === 'interpreter_mediated') interpreter++;
+      if (p.response_source === 'AAC_mediated') aac++;
+      if (p.tier_used === 'tier1') tier.tier1++;
+      else if (p.tier_used === 'tier2') tier.tier2++;
+      else if (p.tier_used === 'tier3') tier.tier3++;
+      else tier.none++;
+      if (Array.isArray(r.reliability_flags) && r.reliability_flags.indexOf('suggestive_risk') !== -1) suggestive++;
+    } else {
+      unanswered++;
+    }
+  }
+  let durationSec = null;
+  if (state.interview && state.interview.started_at_utc && state.interview.completed_at_utc) {
+    const start = new Date(state.interview.started_at_utc).getTime();
+    const end = new Date(state.interview.completed_at_utc).getTime();
+    if (!isNaN(start) && !isNaN(end) && end >= start) durationSec = Math.round((end - start) / 1000);
+  }
+  const obs = state.observations || {};
+  return {
+    total_fields_captured: captured,
+    total_fields_unanswered: unanswered,
+    rephrase_invocations: rephrase,
+    probe_invocations: probe,
+    fields_with_suggestive_risk: suggestive,
+    fields_with_dysregulated_response: dysreg,
+    fields_interpreter_mediated: interpreter,
+    fields_aac_mediated: aac,
+    scaffold_tier_distribution: tier,
+    regulation_check_observations: Array.isArray(obs.regulation_checks) ? obs.regulation_checks.slice() : [],
+    pauses_taken: typeof obs.pauses_taken === 'number' ? obs.pauses_taken : 0,
+    total_duration_seconds: durationSec,
+    nichd_utterance_distribution: null,
+  };
+}
+
+// Adapts the third disclaimer string for purpose. MDR carries the
+// §300.530(e) framing; Universal and stubbed drop it.
+function buildDisclaimers(purpose) {
+  const d = [
+    'This capture does not constitute a Manifestation Determination.',
+    'Reliability flags must be reviewed before any captured field is used as evidence.',
+  ];
+  if (purpose === 'mdr') {
+    d.push('Captured information is "relevant information" under 34 CFR §300.530(e); the determination of whether the conduct was caused by or had a direct and substantial relationship to the student’s disability, or was the direct result of failure to implement the IEP, must be made by the team of qualified professionals.');
+  } else {
+    d.push('Captured information is the student’s account of the incident. Any downstream use must preserve the reliability flags traveling with each field. The team or facilitator using this record makes determinations; this instrument does not.');
+  }
+  return d;
+}
+
+// Single source of truth for both JSON and PDF.
+function buildExportPayload(s) {
+  const purpose = s.interview ? s.interview.purpose : null;
+  return {
+    schema_version: EXPORT_SCHEMA_VERSION,
+    framework: 'Manifesto',
+    tool: 'Student Voice Protocol — Appendix D',
+    tool_version: 'v4.1',
+    interview_id: s.interview_id,
+    generated_at_utc: new Date().toISOString(),
+    purpose: purpose,
+    purpose_label: lookupPurposeLabel(purpose),
+
+    interviewer: Object.assign({}, s.interviewer || {}),
+    student_profile: redactProfileForPurpose(s.profile || {}, purpose),
+    incident_context: Object.assign({}, s.incident || {}),
+
+    domains: buildDomainsBlock(),
+    five_ps_routing: buildFivePsBlock(),
+    quality_summary: buildQualitySummary(),
+    interviewer_observations: Object.assign({}, s.observations || {}),
+
+    aggregation_eligible: purpose === 'universal',
+
+    disclaimers: buildDisclaimers(purpose),
+
+    integrity: {
+      sha256_of_payload: null,
+    },
+  };
+}
+
+// ---- JSON download path ----
+async function sha256Hex(str) {
+  const buf = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  const bytes = new Uint8Array(buf);
+  let out = '';
+  for (let i = 0; i < bytes.length; i++) out += bytes[i].toString(16).padStart(2, '0');
+  return out;
+}
+
+function triggerDownload(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = h('a', { href: url, download: filename, style: 'display:none;' });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(url); }, 0);
+}
+
+// SHA-256 contract: hash is computed over the payload with
+// integrity.sha256_of_payload === null. Downstream consumers re-verify
+// by zeroing that field and re-hashing.
+async function downloadJsonExport() {
+  const payload = buildExportPayload(state);
+  const draft = Object.assign({}, payload, { integrity: { sha256_of_payload: null } });
+  const draftStr = JSON.stringify(draft, null, 2);
+  let hash = null;
+  try {
+    hash = await sha256Hex(draftStr);
+  } catch (e) {
+    alert('Could not compute integrity hash: ' + (e && e.message ? e.message : e));
+    return;
+  }
+  payload.integrity.sha256_of_payload = hash;
+  const finalStr = JSON.stringify(payload, null, 2);
+  const purposeId = (state.interview && state.interview.purpose) || 'unknown';
+  const filename = 'svp-' + purposeId + '-' + state.interview_id + '.json';
+  triggerDownload(finalStr, filename, 'application/json');
+  return { filename: filename, hash: hash };
 }
 
 // ---- tiny DOM helper (no innerHTML anywhere) ----
@@ -2645,139 +2998,514 @@ function restoreInputsFromState() {
 
 // ---- report ----
 function findQuestion(fid) { for (const d of DOMAINS) for (const q of d.questions) if (q.id === fid) return q; return null; }
-function generateReport() {
+
+// =========================================================================
+// BP5 — PDF render helpers (read from buildExportPayload)
+// =========================================================================
+
+// Verbatim disclaimer banner. Uses .legal-cite class to match the
+// existing v4 visual register. Each paragraph from
+// PDF_DISCLAIMER_BANNER_TEXT becomes a <p>; line breaks within
+// paragraphs in the spec source are presentation-only.
+function renderDisclaimerBanner() {
+  const wrap = h('div', { class: 'legal-cite', style: 'margin-bottom:.65rem;' });
+  PDF_DISCLAIMER_BANNER_TEXT.forEach((para, i) => {
+    const p = h('p', { style: 'margin:' + (i === 0 ? '0' : '.6rem 0 0') + ';' + (i === 0 ? 'font-weight:800;font-style:normal;' : '') }, para);
+    wrap.appendChild(p);
+  });
+  return wrap;
+}
+
+// Research-basis citations. MDR ships verbatim per Section 10.
+// Universal drops adultification + MDR-specific references.
+function renderCitationsFooter(purpose) {
+  const text = purpose === 'mdr' ? PDF_CITATIONS_MDR : PDF_CITATIONS_UNIVERSAL;
+  return h('p', { style: 'font-size:.68rem;line-height:1.5;color:#474747;margin:0 0 1.25rem;letter-spacing:.01em;' }, text);
+}
+
+// Identification block — interview_id, schema_version, tool_version,
+// generated_at_utc, purpose label, setting label.
+function renderIdentificationBlock(payload) {
+  const settingLabel = lookupSettingLabel(payload.incident_context && payload.incident_context.setting) || '—';
+  const rows = [
+    ['Interview ID', payload.interview_id],
+    ['Schema version', payload.schema_version],
+    ['Tool version', payload.tool_version],
+    ['Generated (UTC)', payload.generated_at_utc],
+    ['Purpose', payload.purpose_label || payload.purpose || '—'],
+    ['Setting', settingLabel],
+  ];
+  const wrap = h('section', { style: 'margin-bottom:1.5rem;' });
+  wrap.appendChild(h('h3', { class: 'font-headline font-bold', style: 'font-size:1.05rem;margin-bottom:.5rem;' }, 'Record identification'));
+  const table = h('table', { style: 'width:100%;border-collapse:collapse;font-size:.78rem;' });
+  rows.forEach(([k, v]) => {
+    const tr = h('tr');
+    const tk = h('td', { style: 'border:1px solid #000;padding:.35rem .55rem;background:#efeeeb;width:32%;font-weight:700;' }, k);
+    const tv = h('td', { style: 'border:1px solid #000;padding:.35rem .55rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.72rem;word-break:break-all;' }, v == null ? '—' : String(v));
+    tr.appendChild(tk); tr.appendChild(tv);
+    table.appendChild(tr);
+  });
+  wrap.appendChild(table);
+  return wrap;
+}
+
+// Profile + incident context block. Uses redacted profile from payload.
+function renderProfileAndIncidentBlock(payload) {
+  const wrap = h('section', { style: 'margin-bottom:1.5rem;' });
+  wrap.appendChild(h('h3', { class: 'font-headline font-bold', style: 'font-size:1.05rem;margin-bottom:.5rem;' }, 'Student profile · Incident context'));
+  const grid = h('div', { style: 'display:grid;grid-template-columns:1fr 1fr;gap:.75rem;' });
+
+  // Profile column
+  const profile = payload.student_profile || {};
+  const profCol = h('div', { style: 'border:1px solid #000;padding:.6rem .75rem;background:#fff;font-size:.78rem;' });
+  profCol.appendChild(h('div', { style: 'font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:.65rem;color:#78100b;margin-bottom:.4rem;' }, 'Student profile'));
+  const profRows = [];
+  if ('name' in profile) profRows.push(['Name', profile.name]);
+  if ('grade' in profile) profRows.push(['Grade', profile.grade]);
+  if ('ageBand' in profile) profRows.push(['Age band', profile.ageBand]);
+  if ('dob' in profile) profRows.push(['DOB', profile.dob]);
+  if ('iepStatus' in profile) profRows.push(['IEP status', profile.iepStatus]);
+  if ('iepStatus_present' in profile) profRows.push(['IEP present', profile.iepStatus_present ? 'Yes' : 'No']);
+  if ('section504Status' in profile) profRows.push(['504 status', profile.section504Status]);
+  if ('section504Status_present' in profile) profRows.push(['504 present', profile.section504Status_present ? 'Yes' : 'No']);
+  if ('ellStatus' in profile) profRows.push(['ELL status', profile.ellStatus]);
+  if ('ellStatus_present' in profile) profRows.push(['ELL present', profile.ellStatus_present ? 'Yes' : 'No']);
+  if ('primaryLanguage' in profile) profRows.push(['Primary language', profile.primaryLanguage]);
+  profRows.push(['Uses AAC', profile.aacUser ? 'Yes' : 'No']);
+  profRows.push(['Uses ASL', profile.aslUser ? 'Yes' : 'No']);
+  if (Array.isArray(profile.disabilityCategories) && profile.disabilityCategories.length) {
+    profRows.push(['IDEA categories', profile.disabilityCategories.join(', ')]);
+  }
+  profRows.forEach(([k, v]) => {
+    const r = h('div', { style: 'display:flex;gap:.4rem;margin:.15rem 0;' });
+    r.appendChild(h('span', { style: 'flex:0 0 38%;font-weight:700;color:#474747;' }, k));
+    r.appendChild(h('span', { style: 'flex:1;' }, v == null || v === '' ? '—' : String(v)));
+    profCol.appendChild(r);
+  });
+
+  // Incident column
+  const incident = payload.incident_context || {};
+  const incCol = h('div', { style: 'border:1px solid #000;padding:.6rem .75rem;background:#fff;font-size:.78rem;' });
+  incCol.appendChild(h('div', { style: 'font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:.65rem;color:#78100b;margin-bottom:.4rem;' }, 'Incident context'));
+  const whoPresent = Array.isArray(incident.whoPresent) ? incident.whoPresent.join(', ') : incident.whoPresent;
+  const incRows = [
+    ['Date', incident.date],
+    ['Time of day', incident.timeOfDay],
+    ['Setting', lookupSettingLabel(incident.setting) || incident.setting],
+    ['Who present', whoPresent],
+    ['Behavior nature', incident.behaviorNature],
+  ];
+  incRows.forEach(([k, v]) => {
+    const r = h('div', { style: 'display:flex;gap:.4rem;margin:.15rem 0;' });
+    r.appendChild(h('span', { style: 'flex:0 0 38%;font-weight:700;color:#474747;' }, k));
+    r.appendChild(h('span', { style: 'flex:1;' }, v == null || v === '' ? '—' : String(v)));
+    incCol.appendChild(r);
+  });
+
+  grid.appendChild(profCol);
+  grid.appendChild(incCol);
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+// Quality summary block — interviewer fidelity counts.
+function renderQualitySummaryBlock(payload) {
+  const q = payload.quality_summary || {};
+  const wrap = h('section', { style: 'margin-bottom:1.5rem;' });
+  wrap.appendChild(h('h3', { class: 'font-headline font-bold', style: 'font-size:1.05rem;margin-bottom:.5rem;' }, 'Quality summary'));
+  const tier = q.scaffold_tier_distribution || { tier1: 0, tier2: 0, tier3: 0, none: 0 };
+  const rows = [
+    ['Total fields captured', q.total_fields_captured],
+    ['Total fields unanswered', q.total_fields_unanswered],
+    ['Rephrase invocations', q.rephrase_invocations],
+    ['Probe invocations', q.probe_invocations],
+    ['Fields flagged with suggestive_risk', q.fields_with_suggestive_risk],
+    ['Fields with dysregulated response', q.fields_with_dysregulated_response],
+    ['Fields interpreter-mediated', q.fields_interpreter_mediated],
+    ['Fields AAC-mediated', q.fields_aac_mediated],
+    ['Scaffold tier distribution', 'tier1: ' + tier.tier1 + ' · tier2: ' + tier.tier2 + ' · tier3: ' + tier.tier3 + ' · none: ' + tier.none],
+    ['Pauses taken', q.pauses_taken],
+    ['Total duration (seconds)', q.total_duration_seconds == null ? '—' : q.total_duration_seconds],
+  ];
+  const table = h('table', { style: 'width:100%;border-collapse:collapse;font-size:.78rem;' });
+  rows.forEach(([k, v]) => {
+    const tr = h('tr');
+    tr.appendChild(h('td', { style: 'border:1px solid #000;padding:.3rem .55rem;background:#efeeeb;width:55%;font-weight:700;' }, k));
+    tr.appendChild(h('td', { style: 'border:1px solid #000;padding:.3rem .55rem;' }, v == null ? '—' : String(v)));
+    table.appendChild(tr);
+  });
+  wrap.appendChild(table);
+  if (q.fields_with_suggestive_risk > 0) {
+    wrap.appendChild(h('p', { style: 'font-size:.72rem;color:#7A6A2A;margin-top:.5rem;font-style:italic;' }, 'Reminder: ' + q.fields_with_suggestive_risk + ' field(s) carry a suggestive_risk flag. Per Meguerdichian et al. (2024), surfacing this count up-front interrupts the "this answer must be true because the student said it three times" failure mode in facilitated team review.'));
+  }
+  return wrap;
+}
+
+// Render the verbatim student response, splitting on \n into <br>'d lines.
+// Verbatim — never redacted, paraphrased, or auto-summarized.
+function renderVerbatimValue(value, opts) {
+  const o = opts || {};
+  const box = h('div', { style: 'border-left:3px solid #000;padding:.25rem .65rem;font-size:.85rem;background:#fff;' + (o.extra || '') });
+  if (value == null || String(value).trim() === '') {
+    box.appendChild(h('em', { style: 'color:#777;' }, o.emptyText || '— not captured —'));
+    return box;
+  }
+  String(value).split('\n').forEach((line, i) => {
+    if (i > 0) box.appendChild(h('br'));
+    box.appendChild(document.createTextNode(line));
+  });
+  return box;
+}
+
+// Provenance footer for a single field — small-type, includes age band,
+// tier used, response source, language, timestamp. Per BP5 Section 3 #5.
+function renderProvenanceFooter(prov) {
+  if (!prov) return null;
+  const parts = [];
+  if (prov.age_band) parts.push('band: ' + String(prov.age_band).toUpperCase());
+  if (prov.tier_used) parts.push('tier: ' + prov.tier_used);
+  if (prov.response_source) parts.push('source: ' + prov.response_source);
+  if (prov.language) parts.push('lang: ' + prov.language);
+  if (typeof prov.rephrase_count === 'number') parts.push('rephrases: ' + prov.rephrase_count);
+  if (typeof prov.probe_count === 'number') parts.push('probes: ' + prov.probe_count);
+  if (prov.timestamp_utc) parts.push('captured: ' + prov.timestamp_utc);
+  return h('div', { style: 'font-size:.62rem;letter-spacing:.04em;color:#474747;margin-top:.25rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;' }, parts.join(' · '));
+}
+
+// Render a single field block in the Domains section.
+function renderFieldBlock(resp) {
+  const flags = Array.isArray(resp.reliability_flags) ? resp.reliability_flags : [];
+  const isSuggestive = flags.indexOf('suggestive_risk') !== -1;
+  const block = h('div', { style: 'margin-bottom:.75rem;page-break-inside:avoid;' + (isSuggestive ? 'border-top:2px solid #C8A93E;padding-top:.4rem;' : '') });
+
+  const idLine = h('div', { style: "font-family:'Public Sans',sans-serif;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:#78100b;font-weight:700;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;" });
+  idLine.appendChild(h('span', null, resp.field_id + ' · ' + resp.field_label + ' · ' + (resp.qtype || '')));
+  flags.forEach(flag => {
+    const chipStyle = flag === 'suggestive_risk'
+      ? 'background:#FFF8E5;color:#7A6A2A;border:1px solid #7A6A2A;'
+      : 'background:#fff;color:#474747;border:1px solid #474747;';
+    idLine.appendChild(h('span', { style: chipStyle + 'font-size:.55rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:.1rem .4rem;' }, flag));
+  });
+  block.appendChild(idLine);
+
+  if (isSuggestive) {
+    block.appendChild(h('p', { style: 'font-size:.7rem;color:#7A6A2A;margin:.2rem 0;font-style:italic;' }, 'Multi-probe — review for suggestibility before treating as evidence.'));
+  }
+
+  // Prompt context (italic) — uses ageBand from provenance if available
+  const q = findQuestion(resp.field_id);
+  if (q && q.prompts) {
+    const band = (resp.provenance && resp.provenance.age_band) || currentBand;
+    const promptText = q.prompts[band] || q.prompts.hs;
+    if (promptText) {
+      block.appendChild(h('div', { style: "font-family:'Newsreader',serif;font-style:italic;font-size:.95rem;margin:.15rem 0 .25rem;" }, promptText));
+    }
+  }
+
+  // Verbatim value box
+  block.appendChild(renderVerbatimValue(resp.value));
+
+  // Provenance footer
+  const prov = renderProvenanceFooter(resp.provenance);
+  if (prov) block.appendChild(prov);
+
+  // 5 Ps routing line (small)
+  if (Array.isArray(resp.five_ps_routing) && resp.five_ps_routing.length) {
+    block.appendChild(h('div', { style: 'font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:#474747;margin-top:.2rem;' }, 'Routes to → ' + resp.five_ps_routing.join(', ')));
+  }
+
+  return block;
+}
+
+// Render the domains block (every domain, with provenance footers,
+// suggestive-risk amber rule, reliability flag chips).
+function renderDomainsForPdf(payload) {
+  const domains = payload.domains || {};
+  const wrap = h('section', { style: 'margin-bottom:1.5rem;' });
+  wrap.appendChild(h('h2', { class: 'font-headline font-bold', style: 'font-size:1.5rem;margin-bottom:.5rem;' }, 'Captured evidence by domain'));
+
+  // Iterate in DOMAINS order, then D-PEER
+  const domainOrder = DOMAINS.map(d => d.id).concat(['D-PEER']);
+  domainOrder.forEach(did => {
+    const d = domains[did];
+    if (!d) return;
+    const sec = h('section', { style: 'margin-bottom:1rem;' });
+    const hd = h('h3', { class: 'font-headline font-bold', style: 'font-size:1.15rem;margin-bottom:.4rem;' });
+    hd.appendChild(document.createTextNode(d.domain_id + ' — ' + d.domain_title + ' '));
+    const surfacedTag = h('span', { style: 'font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#78100b;margin-left:.4rem;' }, d.was_surfaced ? 'surfaced' : 'gated');
+    hd.appendChild(surfacedTag);
+    sec.appendChild(hd);
+    if (!d.was_surfaced && d.conditional_basis) {
+      sec.appendChild(h('p', { style: 'font-size:.7rem;font-style:italic;color:#474747;margin-bottom:.35rem;' }, 'Domain not surfaced — gated by rule: ' + d.conditional_basis));
+    }
+    (d.responses || []).forEach(resp => sec.appendChild(renderFieldBlock(resp)));
+    wrap.appendChild(sec);
+  });
+
+  return wrap;
+}
+
+// 5 Ps clinical formulation routing (PDF). Reads from payload, includes
+// only captured responses per buildFivePsBlock contract.
+function renderFivePsForPdf(payload) {
+  const five = payload.five_ps_routing || {};
+  const wrap = h('section', { style: 'page-break-before:always;margin-bottom:1.5rem;' });
+  wrap.appendChild(h('h2', { class: 'font-headline font-bold', style: 'font-size:1.5rem;margin-bottom:.25rem;' }, '5 Ps Evidence Routing'));
+  wrap.appendChild(h('p', { style: 'font-size:.75rem;font-style:italic;color:#474747;margin-bottom:.85rem;' }, 'Captured responses organized by clinical formulation category. A field can route to multiple Ps. The exports never invent routings — membership reflects FIVE_PS exactly.'));
+  Object.keys(five).forEach(p => {
+    const items = five[p] || [];
+    const block = h('div', { style: 'margin-bottom:.75rem;page-break-inside:avoid;' });
+    const head = h('h3', { style: 'font-family:"Public Sans",sans-serif;font-weight:800;letter-spacing:.15em;text-transform:uppercase;font-size:.7rem;color:#78100b;margin-bottom:.35rem;' }, p + ' · ' + items.length + ' captured');
+    block.appendChild(head);
+    if (!items.length) {
+      block.appendChild(h('p', { style: 'font-size:.78rem;font-style:italic;color:#777;' }, 'No captured responses route to this category yet.'));
+    } else {
+      const ul = h('ul', { style: 'list-style:disc;padding-left:1.25rem;font-size:.8rem;' });
+      items.forEach(it => {
+        const li = h('li', { style: 'margin-bottom:.3rem;' });
+        li.appendChild(h('strong', null, it.field_id + ' '));
+        li.appendChild(document.createTextNode('· ' + it.field_label + ' — '));
+        li.appendChild(document.createTextNode(it.value));
+        if (Array.isArray(it.reliability_flags) && it.reliability_flags.length) {
+          it.reliability_flags.forEach(f => {
+            const chipStyle = f === 'suggestive_risk'
+              ? 'background:#FFF8E5;color:#7A6A2A;border:1px solid #7A6A2A;'
+              : 'background:#fff;color:#474747;border:1px solid #474747;';
+            li.appendChild(document.createTextNode(' '));
+            li.appendChild(h('span', { style: chipStyle + 'font-size:.55rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:.1rem .35rem;margin-left:.2rem;' }, f));
+          });
+        }
+        ul.appendChild(li);
+      });
+      block.appendChild(ul);
+    }
+    wrap.appendChild(block);
+  });
+  return wrap;
+}
+
+// v4 continuity — interviewer narrative findings + reliability rating.
+// Reads from the DOM (the existing form fields). Kept because it
+// provides team-relevant interviewer judgment that BP5 doesn't replace.
+function renderFindingsBlockFromDom() {
+  const get = id => { const n = document.getElementById(id); return n ? n.value : ''; };
+  const f1 = get('finding-1'), f2 = get('finding-2'), f3 = get('finding-3');
+  const rel = get('reliability'), relReason = get('reliability-reason');
+  const wrap = h('section', { style: 'margin-bottom:1.25rem;' });
+  wrap.appendChild(h('h2', { class: 'font-headline font-bold', style: 'font-size:1.5rem;margin-bottom:.4rem;' }, 'Key Findings · Interviewer narrative'));
+  wrap.appendChild(h('p', { style: 'font-size:.72rem;font-style:italic;color:#474747;margin-bottom:.5rem;' }, 'Three most significant findings the interviewer wishes the team to consider. This is interviewer judgment — not a determination.'));
+  const ol = h('ol', { style: 'list-style:decimal;padding-left:1.4rem;font-size:.85rem;' });
+  [f1, f2, f3].forEach(ftx => {
+    const li = h('li', { style: 'margin-bottom:.35rem;' });
+    if (ftx) li.appendChild(document.createTextNode(ftx));
+    else li.appendChild(h('em', null, '—'));
+    ol.appendChild(li);
+  });
+  wrap.appendChild(ol);
+  const relP = h('p', { style: 'margin-top:.6rem;font-size:.8rem;' });
+  relP.appendChild(h('strong', null, 'Interviewer-rated reliability: '));
+  relP.appendChild(document.createTextNode(rel || '—'));
+  wrap.appendChild(relP);
+  const rrP = h('p', { style: 'font-size:.8rem;' });
+  rrP.appendChild(h('strong', null, 'Reasoning: '));
+  rrP.appendChild(document.createTextNode(relReason || '—'));
+  wrap.appendChild(rrP);
+  return wrap;
+}
+
+// Locate a single response inside payload.domains by field_id.
+function findResponseInPayload(payload, fid) {
+  const domains = payload.domains || {};
+  for (const did of Object.keys(domains)) {
+    const arr = (domains[did] && domains[did].responses) || [];
+    for (const r of arr) {
+      if (r.field_id === fid) return r;
+    }
+  }
+  return null;
+}
+
+// MDR Section A — disability-causation prong (34 CFR §300.530(e)(1)(i)).
+// The team — not this report — makes the determination.
+function renderMdrSectionA(payload) {
+  const wrap = h('section', { style: 'page-break-before:always;margin-bottom:1.5rem;' });
+  wrap.appendChild(h('h2', { class: 'font-headline font-bold', style: 'font-size:1.5rem;margin-bottom:.5rem;' }, 'Section A — Evidence to inform whether the conduct was caused by, or had a direct and substantial relationship to, the student’s disability (34 CFR §300.530(e)(1)(i)).'));
+  wrap.appendChild(h('p', { style: 'font-size:.78rem;font-style:italic;color:#474747;margin-bottom:.65rem;' }, 'The team of qualified professionals — not this report — makes that determination.'));
+  MDR_SECTION_A_FIELDS.forEach(fid => {
+    const resp = findResponseInPayload(payload, fid);
+    if (!resp) return;
+    wrap.appendChild(renderFieldBlock(resp));
+    if (fid === 'D-EMO-04') {
+      wrap.appendChild(h('p', { style: 'font-size:.72rem;font-style:italic;color:#7A6A2A;border-left:3px solid #C8A93E;padding:.3rem .55rem;margin:.2rem 0 .6rem;background:#FFF8E5;' }, REMORSE_TRAP_NOTE));
+    }
+  });
+  return wrap;
+}
+
+// MDR Section B — IEP-implementation-failure prong (34 CFR §300.530(e)(1)(ii)).
+// If the student has no IEP, render the not-applicable line — explicit
+// non-applicability is itself audit evidence.
+function renderMdrSectionB(payload) {
+  const wrap = h('section', { style: 'margin-bottom:1.5rem;' });
+  wrap.appendChild(h('h2', { class: 'font-headline font-bold', style: 'font-size:1.5rem;margin-bottom:.5rem;' }, 'Section B — Evidence to inform whether the conduct was the direct result of failure to implement the IEP (34 CFR §300.530(e)(1)(ii)).'));
+  wrap.appendChild(h('p', { style: 'font-size:.78rem;font-style:italic;color:#474747;margin-bottom:.65rem;' }, 'The team — not this report — makes that determination.'));
+  if (state.profile.iepStatus !== 'yes') {
+    wrap.appendChild(h('p', { style: 'font-size:.85rem;font-style:italic;border:1px solid #000;padding:.6rem .85rem;background:#fff;' }, 'Student profile indicates no active IEP. Section B is not applicable.'));
+    return wrap;
+  }
+  MDR_SECTION_B_FIELDS.forEach(fid => {
+    const resp = findResponseInPayload(payload, fid);
+    if (!resp) return;
+    wrap.appendChild(renderFieldBlock(resp));
+  });
+  return wrap;
+}
+
+// Universal — School-climate signals (D-BLG.* + D-ENV.*) for PBIS aggregation.
+function renderUniversalClimateBlock(payload) {
+  const wrap = h('section', { style: 'page-break-before:always;margin-bottom:1.5rem;' });
+  wrap.appendChild(h('h2', { class: 'font-headline font-bold', style: 'font-size:1.5rem;margin-bottom:.5rem;' }, 'School-climate signals'));
+  wrap.appendChild(h('p', { style: 'font-size:.78rem;font-style:italic;color:#474747;margin-bottom:.65rem;' }, 'Captured responses from belonging and environment domains. Useful for PBIS climate aggregation when records are merged at the building level.'));
+  let any = false;
+  UNIVERSAL_CLIMATE_FIELDS.forEach(fid => {
+    const resp = findResponseInPayload(payload, fid);
+    if (!resp) return;
+    if (resp.value == null) return;  // skip uncaptured for this presentation block
+    wrap.appendChild(renderFieldBlock(resp));
+    any = true;
+  });
+  if (!any) wrap.appendChild(h('p', { style: 'font-size:.85rem;font-style:italic;color:#777;' }, 'No captured climate-related responses in this interview.'));
+  return wrap;
+}
+
+// Universal — Restorative-readiness signals (D-RPR.*).
+function renderUniversalRestorativeBlock(payload) {
+  const wrap = h('section', { style: 'margin-bottom:1.5rem;' });
+  wrap.appendChild(h('h2', { class: 'font-headline font-bold', style: 'font-size:1.5rem;margin-bottom:.5rem;' }, 'Restorative-readiness signals'));
+  wrap.appendChild(h('p', { style: 'font-size:.78rem;font-style:italic;color:#474747;margin-bottom:.65rem;' }, 'Captured responses from the Repair & Restoration domain. The team or facilitator using this record makes any readiness determination.'));
+  let any = false;
+  UNIVERSAL_RESTORATIVE_FIELDS.forEach(fid => {
+    const resp = findResponseInPayload(payload, fid);
+    if (!resp) return;
+    if (resp.value == null) return;
+    wrap.appendChild(renderFieldBlock(resp));
+    any = true;
+  });
+  if (!any) wrap.appendChild(h('p', { style: 'font-size:.85rem;font-style:italic;color:#777;' }, 'No captured repair-related responses in this interview.'));
+  return wrap;
+}
+
+// Machine-readable footer — fixed-width font, links the printed PDF to
+// its JSON twin via interview_id + sha256 hash. Bottom of report.
+function renderMachineFooter(payload) {
+  const wrap = h('section', { style: 'margin-top:2rem;border-top:2px solid #000;padding-top:.65rem;' });
+  wrap.appendChild(h('p', { style: 'font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:#474747;margin-bottom:.35rem;font-weight:700;' }, 'Machine-readable footer · verify against JSON twin'));
+  const pre = h('pre', { style: 'font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.65rem;line-height:1.45;background:#efeeeb;border:1px solid #000;padding:.55rem .7rem;white-space:pre-wrap;word-break:break-all;margin:0;' });
+  const lines = [
+    'interview_id   : ' + (payload.interview_id || ''),
+    'schema_version : ' + (payload.schema_version || ''),
+    'tool_version   : ' + (payload.tool_version || ''),
+    'sha256         : ' + ((payload.integrity && payload.integrity.sha256_of_payload) || ''),
+  ];
+  pre.appendChild(document.createTextNode(lines.join('\n')));
+  wrap.appendChild(pre);
+  return wrap;
+}
+
+// Stubbed-purpose Coming Soon panel — same visual register as
+// renderComingSoon, used inside the print path so the demo can show
+// routing architecture without authored PDF rendering.
+function renderPdfComingSoonPanel(purposeObj, payload) {
+  const wrap = h('section', { class: 'legal-cite', style: 'margin-bottom:1rem;' });
+  wrap.appendChild(h('h2', { class: 'font-headline font-bold', style: 'font-size:1.4rem;margin-bottom:.4rem;font-style:normal;' }, (purposeObj ? purposeObj.label : 'Stubbed purpose')));
+  wrap.appendChild(h('p', { style: 'font-size:.85rem;margin-bottom:.6rem;' }, 'Exports for this purpose are routed in the architecture but not yet rendered. The JSON record is downloadable. PDF rendering arrives in the post-demo build phase per the project roadmap.'));
+  // Identification + machine-readable footer still print, so the team
+  // can confirm the JSON twin even without the section-level rendering.
+  if (payload) {
+    wrap.appendChild(renderIdentificationBlock(payload));
+    wrap.appendChild(renderMachineFooter(payload));
+  }
+  return wrap;
+}
+
+// =========================================================================
+// BP5 — generateReport: extends v4 print path
+// =========================================================================
+// Async because we await sha256 hash. window.print() runs after the hash
+// is computed, so the printed footer matches the JSON twin.
+async function generateReport() {
   const m = getMeta();
   if (m['m-student']) document.getElementById('sidebar-case').textContent = m['m-student'].toUpperCase();
   const rpt = document.getElementById('print-report');
   clear(rpt);
 
-  // Not-a-determination banner
-  rpt.appendChild(makeWarningCard(
-    'This Is Not a Manifestation Determination',
-    'This report organizes raw student evidence for MDR-team deliberation. The two-prong test under 34 CFR §300.530(e) belongs to the team of qualified professionals, not to this instrument. Absence of remorse, flat affect, cool pose, and fragmentary recall are NOT evidence against manifestation.'
-  ));
-  const sp = h('div', { style: 'height:1rem;' }); rpt.appendChild(sp);
+  const purpose = state.interview && state.interview.purpose;
+  const purposeObj = INTERVIEW_PURPOSES.find(p => p.id === purpose);
+  const status = purposeObj ? purposeObj.status : null;
 
-  rpt.appendChild(h('h1', { class: 'font-headline font-bold mb-1', style: 'font-size:2.75rem;letter-spacing:-.02em;' }, 'Student Voice Protocol Report'));
-  rpt.appendChild(h('p', { class: 'text-[.75rem] uppercase tracking-widest mb-8 text-tertiary' }, 'Manifesto Student Voice Protocol — Appendix D v4.1 · Evidence Collection for MDR Review'));
+  // Build the canonical payload (single source of truth) and compute
+  // the integrity hash. Hash is computed over the payload with
+  // integrity.sha256_of_payload === null (the contract).
+  const payload = buildExportPayload(state);
+  const draft = Object.assign({}, payload, { integrity: { sha256_of_payload: null } });
+  const draftStr = JSON.stringify(draft, null, 2);
+  let hash = null;
+  try { hash = await sha256Hex(draftStr); } catch (e) { hash = null; }
+  payload.integrity.sha256_of_payload = hash;
 
-  // metadata table
-  const metaTable = h('table', { style: 'width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:1.5rem;' });
-  const rows = [
-    [['Student', m['m-student']], ['Grade/Age', m['m-grade']], ['Disability category', m['m-disability']]],
-    [['Interviewer', m['m-interviewer']], ['Role', m['m-role']], ['Trusted-adult relationship', m['m-relationship']]],
-    [['Incident date', m['m-incident-date']], ['Interview date/time', m['m-interview-date'] + ' ' + m['m-interview-time']], ['Modality', m['m-modality']]],
-    [['Age band used', currentBand.toUpperCase()], ['Interviewer NOT disciplining admin', m.notDiscipliner ? 'Yes' : 'NOT confirmed'], ['Consent', (m.consent || '—') + (m.consentCondition ? ' (' + m.consentCondition + ')' : '')]],
-  ];
-  rows.forEach(r => {
-    const tr = h('tr');
-    r.forEach(([k, v]) => {
-      const td = h('td', { style: 'border:1px solid #000;padding:.4rem .6rem;' });
-      td.appendChild(h('strong', null, k + ': '));
-      td.appendChild(document.createTextNode(v || ''));
-      tr.appendChild(td);
-    });
-    metaTable.appendChild(tr);
-  });
-  rpt.appendChild(metaTable);
+  // Stubbed-purpose path — renders the Coming Soon panel only.
+  if (status === 'stubbed') {
+    rpt.appendChild(renderPdfComingSoonPanel(purposeObj, payload));
+    window.print();
+    return;
+  }
 
+  // 1. Disclaimer banner (verbatim per Section 10) + research basis citations
+  rpt.appendChild(renderDisclaimerBanner());
+  rpt.appendChild(renderCitationsFooter(purpose));
+
+  // Title
+  rpt.appendChild(h('h1', { class: 'font-headline font-bold', style: 'font-size:2.4rem;letter-spacing:-.02em;margin:.5rem 0 .25rem;' }, 'Student Voice Protocol — Evidence Record'));
+  rpt.appendChild(h('p', { style: 'font-size:.7rem;text-transform:uppercase;letter-spacing:.15em;color:#78100b;margin-bottom:1rem;' }, 'Manifesto Student Voice Protocol — Appendix D · ' + payload.tool_version + ' · ' + (payload.purpose_label || '—')));
+
+  // 2. Identification block
+  rpt.appendChild(renderIdentificationBlock(payload));
+
+  // Threat-pause continuity (v4 behavior preserved)
   if (threatPaused) {
     rpt.appendChild(makeWarningCard(
       'Interview Paused for Threat Assessment Routing',
       'Paused at ' + new Date(threatPaused.at).toLocaleString() + '. Reason: ' + threatPaused.reason + '. Student Voice Protocol does not conduct threat assessment — the two processes remain structurally separate.'
     ));
-    rpt.appendChild(h('div', { style: 'height:1rem;' }));
+    rpt.appendChild(h('div', { style: 'height:.75rem;' }));
   }
 
-  // coverage
-  let filled = 0, gapList = [];
-  DOMAINS.forEach(d => d.questions.forEach(q => {
-    if (answers[q.id] && answers[q.id].trim()) filled++;
-    else gapList.push(q.id);
-  }));
-  const coverageMsg = filled + ' of ' + (filled + gapList.length) + ' fields captured. ' +
-    (gapList.length > 0 ? 'Uncaptured: ' + gapList.join(', ') + '. The MDR team should note these gaps during review.' : 'All fields captured.');
-  rpt.appendChild(makeInfoBanner('Coverage', coverageMsg));
-  rpt.appendChild(h('div', { style: 'height:1rem;' }));
+  // 3. Profile + incident context
+  rpt.appendChild(renderProfileAndIncidentBlock(payload));
 
-  // domains
-  DOMAINS.forEach(d => {
-    const sec = h('section', { style: 'margin-bottom:1.25rem;' });
-    const h2 = h('h2', { class: 'font-headline font-bold mb-2', style: 'font-size:1.5rem;' }, 'Domain ' + d.num + ' — ' + d.title + ' ');
-    const tag = h('span', { style: "font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#78100b;margin-left:.5rem;" }, d.mandatory ? 'Mandatory' : 'Conditional');
-    h2.appendChild(tag);
-    sec.appendChild(h2);
-    d.questions.forEach(q => {
-      const qd = h('div', { style: 'margin-bottom:.75rem;page-break-inside:avoid;' });
-      qd.appendChild(h('div', { style: "font-family:'Public Sans',sans-serif;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:#78100b;font-weight:700;" }, q.id + ' · ' + q.label + ' · ' + q.qtype));
-      qd.appendChild(h('div', { style: "font-family:'Newsreader',serif;font-style:italic;font-size:.95rem;margin:.15rem 0 .25rem;" }, q.prompts[currentBand]));
-      const ansBox = h('div', { style: 'border-left:3px solid #000;padding:.25rem .65rem;font-size:.85rem;' });
-      if (answers[q.id] && answers[q.id].trim()) {
-        answers[q.id].split('\n').forEach((line, i) => {
-          if (i > 0) ansBox.appendChild(h('br'));
-          ansBox.appendChild(document.createTextNode(line));
-        });
-      } else {
-        ansBox.appendChild(h('em', { style: 'color:#777;' }, '— not captured —'));
-      }
-      qd.appendChild(ansBox);
-      qd.appendChild(h('div', { style: 'font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:#474747;margin-top:.15rem;' }, 'Routes to → ' + q.routing));
-      sec.appendChild(qd);
-    });
-    rpt.appendChild(sec);
-  });
+  // 4. Quality summary
+  rpt.appendChild(renderQualitySummaryBlock(payload));
 
-  // 5 Ps routing
-  const five = h('section', { style: 'page-break-before:always;margin-bottom:1.25rem;' });
-  five.appendChild(h('h2', { class: 'font-headline font-bold mb-1', style: 'font-size:1.75rem;' }, '5 Ps Evidence Routing'));
-  five.appendChild(h('p', { class: 'text-[.75rem] italic text-ink-soft mb-4' }, 'Raw evidence organized for team deliberation. This is not a manifestation determination.'));
-  Object.entries(FIVE_PS).forEach(([ps, fields]) => {
-    const block = h('div', { style: 'margin-bottom:.75rem;' });
-    block.appendChild(h('h3', { class: 'font-bold uppercase text-[.7rem] mb-2 text-tertiary', style: 'letter-spacing:.15em;' }, ps));
-    const ul = h('ul', { style: 'list-style:disc;padding-left:1.5rem;font-size:.82rem;' });
-    fields.forEach(fid => {
-      const q = findQuestion(fid); if (!q) return;
-      const li = h('li', { style: 'margin-bottom:.35rem;' });
-      li.appendChild(h('strong', null, fid + ' '));
-      li.appendChild(document.createTextNode('· ' + q.label + ' — '));
-      if (answers[fid] && answers[fid].trim()) li.appendChild(document.createTextNode(answers[fid]));
-      else li.appendChild(h('em', { style: 'color:#777;' }, 'not captured'));
-      ul.appendChild(li);
-    });
-    block.appendChild(ul);
-    five.appendChild(block);
-  });
-  rpt.appendChild(five);
+  // 5. Domains block (with provenance footers + suggestive-risk amber rule)
+  rpt.appendChild(renderDomainsForPdf(payload));
 
-  // findings
-  const f1 = document.getElementById('finding-1').value;
-  const f2 = document.getElementById('finding-2').value;
-  const f3 = document.getElementById('finding-3').value;
-  const rel = document.getElementById('reliability').value;
-  const relReason = document.getElementById('reliability-reason').value;
-  const fnd = h('section', { style: 'margin-bottom:1.25rem;' });
-  fnd.appendChild(h('h2', { class: 'font-headline font-bold mb-2', style: 'font-size:1.5rem;' }, 'Key Findings for MDR Team'));
-  const ol = h('ol', { style: 'list-style:decimal;padding-left:1.5rem;font-size:.9rem;' });
-  [f1, f2, f3].forEach(ftx => {
-    const li = h('li', { style: 'margin-bottom:.4rem;' });
-    if (ftx) li.appendChild(document.createTextNode(ftx));
-    else li.appendChild(h('em', null, '—'));
-    ol.appendChild(li);
-  });
-  fnd.appendChild(ol);
-  const relP = h('p', { class: 'mt-4 text-[.85rem]' });
-  relP.appendChild(h('strong', null, 'Interviewer-rated reliability: '));
-  relP.appendChild(document.createTextNode(rel || '—'));
-  fnd.appendChild(relP);
-  const rrP = h('p', { class: 'text-[.85rem]' });
-  rrP.appendChild(h('strong', null, 'Reasoning: '));
-  rrP.appendChild(document.createTextNode(relReason || '—'));
-  fnd.appendChild(rrP);
-  rpt.appendChild(fnd);
+  // 6. 5 Ps routing block
+  rpt.appendChild(renderFivePsForPdf(payload));
 
-  // legal cite footer
-  const cite = h('div', { class: 'legal-cite' }, 'Report generated from Manifesto Student Voice Protocol — Appendix D v4.1. Evidence captured is "relevant information" under 34 CFR §300.530(e) and must be reviewed by the MDR team with the parent/guardian. Person-first language preserved throughout. Data retention and FERPA handling per district policy.');
-  rpt.appendChild(cite);
+  // v4-continuity findings block (interviewer narrative)
+  rpt.appendChild(renderFindingsBlockFromDom());
+
+  // 7/8. Purpose-specific evidence framing
+  if (purpose === 'mdr') {
+    rpt.appendChild(renderMdrSectionA(payload));
+    rpt.appendChild(renderMdrSectionB(payload));
+  } else if (purpose === 'universal') {
+    rpt.appendChild(renderUniversalClimateBlock(payload));
+    rpt.appendChild(renderUniversalRestorativeBlock(payload));
+  }
+
+  // 9. Machine-readable footer
+  rpt.appendChild(renderMachineFooter(payload));
 
   window.print();
 }
@@ -2828,6 +3556,26 @@ function renderComingSoon(purpose) {
   const back = h('button', { class: 'btn-secondary', type: 'button' }, 'Back to purpose selection');
   back.addEventListener('click', resetPurposeSelection);
   root.appendChild(back);
+
+  // BP5 — surface export buttons here too so stubbed purposes can
+  // demonstrate the routing architecture: JSON ships fully, PDF lands
+  // on a Coming Soon panel.
+  const exportBlock = h('div', { class: 'mt-6 pt-5 border-t-2 border-black' });
+  exportBlock.appendChild(h('h3', { class: 'font-headline text-xl font-bold mb-1' }, 'Export evidence record'));
+  exportBlock.appendChild(h('p', { class: 'text-sm italic text-ink-soft mb-3' }, 'Even with this purpose still in research, the architectural routing works: the JSON export ships the full payload (reliability flags travel with each field), and the PDF lands on a Coming Soon panel.'));
+  const buttons = h('div', { class: 'flex flex-wrap gap-3' });
+  const jsonBtn = h('button', { class: 'btn-primary', type: 'button' });
+  jsonBtn.appendChild(icon('download', 16));
+  jsonBtn.appendChild(document.createTextNode(' Download JSON'));
+  jsonBtn.addEventListener('click', () => downloadJsonExport());
+  const pdfBtn = h('button', { class: 'btn-secondary', type: 'button' });
+  pdfBtn.appendChild(icon('print', 16));
+  pdfBtn.appendChild(document.createTextNode(' Generate PDF'));
+  pdfBtn.addEventListener('click', () => generateReport());
+  buttons.appendChild(jsonBtn);
+  buttons.appendChild(pdfBtn);
+  exportBlock.appendChild(buttons);
+  root.appendChild(exportBlock);
 }
 
 function selectPurpose(purposeId) {
@@ -3135,6 +3883,28 @@ document.addEventListener('DOMContentLoaded', () => {
     b.addEventListener('click', () => setBand(b.dataset.band));
   });
 
+  // BP5 — Export panel button wiring
+  const dlJson = document.getElementById('export-download-json');
+  const genPdf = document.getElementById('export-generate-pdf');
+  const status = document.getElementById('export-status');
+  if (dlJson) dlJson.addEventListener('click', async () => {
+    if (status) status.textContent = 'Building export…';
+    try {
+      const res = await downloadJsonExport();
+      if (status && res) status.textContent = 'Downloaded ' + res.filename + ' · sha256 ' + (res.hash ? res.hash.slice(0, 16) + '…' : '—');
+    } catch (e) {
+      if (status) status.textContent = 'Export failed: ' + (e && e.message ? e.message : e);
+    }
+  });
+  if (genPdf) genPdf.addEventListener('click', () => {
+    if (status) status.textContent = 'Building PDF…';
+    Promise.resolve(generateReport()).then(() => {
+      if (status) status.textContent = 'PDF rendered — use your browser’s print-to-file to save.';
+    }).catch(e => {
+      if (status) status.textContent = 'PDF failed: ' + (e && e.message ? e.message : e);
+    });
+  });
+
   document.querySelectorAll('[data-speak-target]').forEach(btn => {
     btn.addEventListener('click', () => {
       const target = document.querySelector(btn.getAttribute('data-speak-target'));
@@ -3151,6 +3921,8 @@ window.toggleDrawer = toggleDrawer;
 window.pauseForThreat = pauseForThreat;
 window.selectPurpose = selectPurpose;
 window.resetPurposeSelection = resetPurposeSelection;
+window.downloadJsonExport = downloadJsonExport;
+window.buildExportPayload = buildExportPayload;
 </script>
 </body>
 </html>
