@@ -160,11 +160,6 @@ tailwind.config = {
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-surface border-b-2 border-black">
   <div class="flex items-center gap-6">
     <span class="font-headline text-xl font-bold italic tracking-tight">Manifesto Engine</span>
-    <nav class="hidden md:flex gap-1 items-center">
-      <a class="text-[.65rem] font-bold uppercase tracking-wider px-3 py-1 border border-transparent hover:border-black hover:bg-black hover:text-white transition-all" href="#">Case Files</a>
-      <a class="text-[.65rem] font-bold uppercase tracking-wider px-3 py-1 border border-transparent hover:border-black hover:bg-black hover:text-white transition-all" href="#">Legal Database</a>
-      <a class="text-[.65rem] font-bold uppercase tracking-wider px-3 py-1 border border-transparent hover:border-black hover:bg-black hover:text-white transition-all" href="#">Faculty Portal</a>
-    </nav>
   </div>
   <div class="flex gap-3 items-center">
     <span id="draft-stamp" class="text-[.6rem] font-bold uppercase tracking-widest text-ink-soft">Unsaved</span>
@@ -176,47 +171,8 @@ tailwind.config = {
 <!-- =========== LAYOUT =========== -->
 <div class="pt-16 min-h-screen flex">
 
-  <!-- SIDEBAR -->
-  <aside class="w-60 shrink-0 border-r-2 border-black bg-surface overflow-y-auto fixed top-16 bottom-0 left-0">
-    <div class="px-4 py-3 border-b border-black flex justify-between items-center">
-      <div>
-        <span class="text-[.6rem] font-bold uppercase tracking-widest text-ink-soft">Case:</span>
-        <span id="sidebar-case" class="text-[.6rem] font-bold uppercase tracking-widest ml-1">— —</span>
-      </div>
-      <span class="text-[.6rem] font-bold uppercase tracking-widest">App. D</span>
-    </div>
-
-    <div class="phase-header">Phase 1 · Before the Meeting</div>
-    <nav class="flex flex-col">
-      <a class="step-link completed" href="#"><span class="text-[.58rem] font-mono mr-1">1.0</span>Case Setup</a>
-      <a class="step-link completed" href="#"><span class="text-[.58rem] font-mono mr-1">1.1</span>Constructive Removal</a>
-      <a class="step-link completed" href="#"><span class="text-[.58rem] font-mono mr-1">1.2</span>Document Assembly</a>
-      <a class="step-link completed" href="#"><span class="text-[.58rem] font-mono mr-1">1.3</span>IEP Fidelity</a>
-      <a class="step-link active" href="#"><span class="text-[.58rem] font-mono mr-1">1.4</span>Student Voice</a>
-      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">1.5</span>Family Preparation</a>
-      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">1.6</span>Staff Evidence</a>
-      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">1.7</span>Process Observer</a>
-      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">1.8</span>Pre-Meeting Triggers</a>
-    </nav>
-    <div class="phase-header">Phase 2 · During Meeting</div>
-    <nav class="flex flex-col">
-      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">2.1</span>Opening / EC1</a>
-      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">2.2</span>Evidence Review</a>
-      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">2.3</span>Question 1 / EC2</a>
-      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">2.4</span>Question 2</a>
-      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">2.5</span>Determination / EC3</a>
-    </nav>
-    <div class="phase-header">Phase 3 · After Meeting</div>
-    <nav class="flex flex-col pb-20">
-      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">3.1</span>Prior Written Notice</a>
-      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">3.2</span>Observer Debrief</a>
-      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">3.3</span>FBA/BIP Data</a>
-      <a class="step-link" href="#"><span class="text-[.58rem] font-mono mr-1">3.4</span>FAPE & Reentry</a>
-    </nav>
-  </aside>
-
   <!-- MAIN -->
-  <main class="ml-60 flex-1 min-h-screen">
+  <main class="flex-1 min-h-screen">
 
     <!-- THREAT ASSESSMENT PAUSE BAR -->
     <div id="threat-bar" class="threat-pause-bar no-print">
@@ -227,26 +183,12 @@ tailwind.config = {
     <div id="interview-body" class="max-w-5xl mx-auto px-10 py-14">
 
       <!-- HERO -->
-      <span class="text-[.7rem] font-bold uppercase tracking-[.25em] text-tertiary block mb-3">Appendix D · Step 1.4 · Phase 1: Before the Meeting</span>
+      <span class="text-[.7rem] font-bold uppercase tracking-[.25em] text-tertiary block mb-3">Student voice · Transformative change · Belonging</span>
       <h1 class="font-headline text-6xl md:text-7xl font-bold tracking-tighter leading-none mb-6">Student Voice Protocol</h1>
       <div class="max-w-4xl border-l-4 border-black pl-6 py-2 mb-8">
         <p class="font-headline text-lg md:text-xl italic leading-relaxed text-ink">
           <em>Nothing about us without us.</em> Students must have power, not just presence, in decisions about their education. This interview centers the student's experience and presents their voice to the team <strong>without filtering through adult interpretation</strong>. This is not an interrogation. This is evidence collection.
         </p>
-      </div>
-
-      <!-- LEGAL/CLINICAL MANDATORY DISTINCTION -->
-      <div class="bg-tertiary text-white p-7 border-2 border-black mb-3">
-        <div class="flex gap-5 items-start">
-          <span class="material-symbols-outlined text-3xl mt-1" style="font-variation-settings:'FILL' 1;">gavel</span>
-          <div>
-            <h3 class="font-bold uppercase text-[.7rem] tracking-[.15em] mb-2 opacity-80">Legal / Clinical Mandatory Distinction</h3>
-            <p class="font-headline text-xl md:text-2xl font-bold italic leading-snug">"Never ask whether the student knew the rules. Always ask whether the student could follow the rules at that moment."</p>
-          </div>
-        </div>
-      </div>
-      <div class="legal-cite mb-12">
-        <strong>Legal basis:</strong> IDEA requires the MDR team to review "all relevant information in the student's file" (34 CFR §300.530(e)). The 2006 Federal Register commentary (71 Fed. Reg. 46,720) emphasizes that no source of relevant information may be excluded. The student's first-person account is relevant information — knowing a rule does not equate to the ability to execute that rule under stress.
       </div>
 
       <!-- PURPOSE SELECTOR — gates everything below until selection -->
@@ -621,18 +563,6 @@ tailwind.config = {
         <p class="text-[.7rem] uppercase tracking-widest text-ink-soft mt-4" id="export-status"></p>
       </section>
 
-      <!-- FOOTER ACTION -->
-      <div class="mt-20 pt-10 border-t-4 border-black flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div class="flex flex-col">
-          <span class="text-[.65rem] font-black uppercase tracking-widest text-ink-soft">Archive Status</span>
-          <span id="footer-stamp" class="text-xs font-bold">Draft not saved</span>
-        </div>
-        <div class="flex gap-3 flex-wrap">
-          <button class="btn-secondary" onclick="saveDraft()">Save as Draft</button>
-          <button class="btn-primary" onclick="generateReport()">Generate Report &amp; Print</button>
-        </div>
-      </div>
-
       </div><!-- /#gated-interview-content -->
     </div>
 
@@ -642,15 +572,11 @@ tailwind.config = {
 </div>
 
 <!-- FOOTER -->
-<footer class="ml-60 border-t-2 border-black px-10 py-8 bg-black text-white no-print">
-  <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between gap-6">
+<footer class="border-t-2 border-black px-10 py-8 bg-black text-white no-print">
+  <div class="max-w-5xl mx-auto">
     <div>
-      <span class="font-headline text-lg font-bold italic">Manifesto Engine</span>
-      <p class="text-[.7rem] text-stone-400 mt-2 max-w-sm">Every determination is a legal and moral obligation. The tool guides; the IEP team decides.</p>
-    </div>
-    <div class="flex gap-10 text-[.7rem]">
-      <div><span class="block font-bold uppercase tracking-widest text-stone-500 mb-1">Protocol</span><span class="block">Appendix D v4.0 Final</span><span class="block">37 fields · 9 domains</span></div>
-      <div><span class="block font-bold uppercase tracking-widest text-stone-500 mb-1">Research base</span><span class="block">NICHD Investigative Protocol</span><span class="block">Mahler Interoception Curriculum</span></div>
+      <span class="font-headline text-lg font-bold italic">Student Voice Protocol</span>
+      <p class="text-[.7rem] text-stone-400 mt-2 max-w-sm">Nothing about us without us.</p>
     </div>
   </div>
 </footer>
@@ -2906,7 +2832,6 @@ function saveDraft() {
 
     const stamp = 'Draft saved ' + new Date().toLocaleTimeString();
     document.getElementById('draft-stamp').textContent = stamp;
-    document.getElementById('footer-stamp').textContent = stamp;
   } catch (e) { alert('Could not save locally: ' + e.message); }
 }
 function loadDraft() {
@@ -3435,7 +3360,6 @@ function renderPdfComingSoonPanel(purposeObj, payload) {
 // is computed, so the printed footer matches the JSON twin.
 async function generateReport() {
   const m = getMeta();
-  if (m['m-student']) document.getElementById('sidebar-case').textContent = m['m-student'].toUpperCase();
   const rpt = document.getElementById('print-report');
   clear(rpt);
 
